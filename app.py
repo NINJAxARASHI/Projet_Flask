@@ -126,15 +126,35 @@ def browse(folder_id=None):
         current_folder = None
         subfolders = []
         files = []
+        available_folders = []
+        root_folder = None
         
         if folder_id:
-            current_folder = Folder.query.filter_by(id=folder_id, owner_id=current_user.id).first_or_404()
-            subfolders = Folder.query.filter_by(parent_id=folder_id, owner_id=current_user.id).all()
-            files = File.query.filter_by(folder_id=folder_id, owner_id=current_user.id).all()
+            # Si un dossier spécifique est demandé
+            if current_user.is_admin:
+                # Les admins peuvent accéder à tous les dossiers
+                current_folder = Folder.query.get_or_404(folder_id)
+                subfolders = Folder.query.filter_by(parent_id=folder_id).all()
+                files = File.query.filter_by(folder_id=folder_id).all()
+            else:
+                # Les utilisateurs normaux ne peuvent accéder qu'à leurs dossiers
+                current_folder = Folder.query.filter_by(id=folder_id, owner_id=current_user.id).first_or_404()
+                subfolders = Folder.query.filter_by(parent_id=folder_id, owner_id=current_user.id).all()
+                files = File.query.filter_by(folder_id=folder_id, owner_id=current_user.id).all()
         else:
-            # Si aucun dossier n'est sélectionné, afficher les dossiers racine
-            subfolders = Folder.query.filter_by(parent_id=None, owner_id=current_user.id).all()
-            files = File.query.filter_by(folder_id=None, owner_id=current_user.id).all()
+            # Si aucun dossier n'est sélectionné
+            if current_user.is_admin:
+                # Les admins voient tous les dossiers racine et le dossier root
+                root_folder = Folder.query.filter_by(name='root', parent_id=None).first()
+                if not root_folder:
+                    # Créer le dossier root s'il n'existe pas
+                    root_folder = Folder(name='root', owner_id=current_user.id)
+                    db.session.add(root_folder)
+                    db.session.commit()
+                available_folders = Folder.query.filter(Folder.parent_id.is_(None), Folder.id != root_folder.id).all()
+            else:
+                # Les utilisateurs normaux ne voient que leurs dossiers racine
+                available_folders = Folder.query.filter_by(parent_id=None, owner_id=current_user.id).all()
         
         # Récupérer le chemin du dossier courant
         folder_path = []
@@ -148,14 +168,18 @@ def browse(folder_id=None):
                              current_folder=current_folder,
                              subfolders=subfolders,
                              files=files,
-                             folder_path=folder_path)
+                             folder_path=folder_path,
+                             available_folders=available_folders,
+                             root_folder=root_folder)
     except Exception as e:
         flash(str(e), 'error')
         return render_template('browse.html', 
                              current_folder=None,
                              subfolders=[],
                              files=[],
-                             folder_path=[])
+                             folder_path=[],
+                             available_folders=[],
+                             root_folder=None)
 
 @app.route('/upload')
 @login_required
@@ -385,7 +409,7 @@ def create_folder():
             return jsonify({'success': False, 'message': 'Folder name is required'})
             
         # Vérifier si le dossier parent existe
-        if parent_id:
+        if parent_id is not None and parent_id != "null":
             parent = Folder.query.get_or_404(parent_id)
             if parent.owner_id != current_user.id and not current_user.is_admin:
                 return jsonify({'success': False, 'message': 'Access denied'})
@@ -393,7 +417,7 @@ def create_folder():
         # Créer le nouveau dossier
         new_folder = Folder(
             name=name,
-            parent_id=parent_id,
+            parent_id=parent_id if parent_id not in [None, "null"] else None,
             owner_id=current_user.id,
             size_limit=size_limit if current_user.is_admin else None  # Seul l'admin peut définir une limite
         )
