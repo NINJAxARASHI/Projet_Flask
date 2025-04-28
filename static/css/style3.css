@@ -82,13 +82,26 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 .report {
-    color: #fff;
+    background-color: #0a5fb4;
+    color: white;
     text-decoration: none;
+    padding: 12px 24px;
+    border-radius: 25px;
     font-weight: bold;
-    cursor: pointer;
+    font-size: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-block;
 }
 .report:hover {
-    text-decoration: underline;
+    background: linear-gradient(135deg, #0a5fb4, #36d1dc);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-decoration: none;
+}
+.report:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 h1 {
     color: #fff;
