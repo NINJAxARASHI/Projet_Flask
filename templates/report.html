@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analyse du Stockage</title>
+    <title>Storage Analysis</title>
     <style>
         * {
             margin: 0;
@@ -33,13 +33,17 @@
             border: none;
             font-size: 18px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
         }
         
         .back-button:hover {
-            transform: translateX(-5px) scale(1.05);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             background-color: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .back-button svg {
+            margin-right: 10px;
         }
         
         .report-title {
@@ -194,7 +198,7 @@
         Back
     </a>
     
-    <h1 class="report-title">ANALYSE DU STOCKAGE</h1>
+    <h1 class="report-title">STORAGE ANALYSIS</h1>
     
     <div class="report-container">
         <h2 class="section-title">
@@ -202,24 +206,24 @@
                 <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="#0a5fb4" stroke-width="2"/>
                 <path d="M15 12L12 9M12 9L9 12M12 9V15" stroke="#0a5fb4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            Utilisation Actuelle
+            Current Usage
         </h2>
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-value">{{ total_storage }}</div>
-                <div class="stat-label">Stockage Total Utilisé</div>
+                <div class="stat-label">Total Storage Used</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">{{ total_files }}</div>
-                <div class="stat-label">Fichiers Stockés</div>
+                <div class="stat-label">Stored Files</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">{{ total_folders }}</div>
-                <div class="stat-label">Dossiers Créés</div>
+                <div class="stat-label">Created Folders</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">{{ total_users }}</div>
-                <div class="stat-label">Utilisateurs Actifs</div>
+                <div class="stat-label">Active Users</div>
             </div>
         </div>
     </div>
@@ -229,7 +233,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                 <path d="M12 3V21M12 3L8 7M12 3L16 7M5 8L3 12L5 16M19 8L21 12L19 16" stroke="#0a5fb4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            Activités Récentes
+            Recent Activities
         </h2>
         <ul class="activity-list">
             {% for user in user_stats %}
@@ -249,13 +253,13 @@
                 <div class="activity-details">
                     <div class="activity-title">{{ user.email }}</div>
                     <div class="activity-meta">
-                        {{ user.files_count }} fichiers | {{ user.folders_count }} dossiers | {{ user.storage_used }} utilisés
+                        {{ user.files_count }} files | {{ user.folders_count }} folders | {{ user.storage_used }} used
                         {% if user.limit_percent > 90 %}
-                        <span class="warning">({{ user.limit_percent }}% de la limite)</span>
+                        <span class="warning">({{ user.limit_percent }}% of the limit)</span>
                         {% elif user.limit_percent > 70 %}
-                        <span class="warning">({{ user.limit_percent }}% de la limite)</span>
+                        <span class="warning">({{ user.limit_percent }}% of the limit)</span>
                         {% else %}
-                        <span class="success">({{ user.limit_percent }}% de la limite)</span>
+                        <span class="success">({{ user.limit_percent }}% of the limit)</span>
                         {% endif %}
                     </div>
                 </div>

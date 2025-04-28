@@ -284,6 +284,51 @@
         .btn-submit:hover {
             background-color: #094d8f;
         }
+
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            margin-left: 15px;
+        }
+
+        .btn-delete:hover {
+            background-color: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            min-width: 250px;
+            padding: 18px 30px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 18px;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s, transform 0.5s;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        .notification.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+        .notification.success {
+            background: linear-gradient(90deg, #36d1dc, #0a5fb4);
+        }
+        .notification.error {
+            background: linear-gradient(90deg, #dc3545, #b40a0a);
+        }
     </style>
 </head>
 <body>
@@ -304,24 +349,24 @@
                 <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="#0a5fb4" stroke-width="2"/>
                 <path d="M15 12L12 9M12 9L9 12M12 9V15" stroke="#0a5fb4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            Vue d'ensemble du système
+            System Overview
         </h2>
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-value">{{ total_storage }}</div>
-                <div class="stat-label">Stockage Total Utilisé</div>
+                <div class="stat-label">Total Storage Used</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">{{ total_files }}</div>
-                <div class="stat-label">Fichiers Stockés</div>
+                <div class="stat-label">Stored Files</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">{{ total_folders }}</div>
-                <div class="stat-label">Dossiers Créés</div>
+                <div class="stat-label">Created Folders</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">{{ total_users }}</div>
-                <div class="stat-label">Utilisateurs Actifs</div>
+                <div class="stat-label">Active Users</div>
             </div>
         </div>
     </div>
@@ -332,14 +377,14 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                 <path d="M12 3V21M12 3L8 7M12 3L16 7M5 8L3 12L5 16M19 8L21 12L19 16" stroke="#0a5fb4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            Gestion des Utilisateurs
+            User Management
         </h2>
         
         <button class="btn-add-user" onclick="showAddUserModal()">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            Ajouter un Utilisateur
+            Add User
         </button>
         
         <ul class="activity-list">
@@ -360,7 +405,7 @@
                 <div class="activity-details">
                     <div class="activity-title">{{ user.email }}</div>
                     <div class="activity-meta">
-                        Stockage utilisé : {{ user.storage_used }} / {{ user.storage_limit }}
+                        Storage used: {{ user.storage_used }} / {{ user.storage_limit }}
                         {% if user.usage_percent > 90 %}
                         <span class="warning">({{ user.usage_percent }}%)</span>
                         {% elif user.usage_percent > 70 %}
@@ -370,7 +415,7 @@
                         {% endif %}
                     </div>
                 </div>
-                <button class="btn-delete" onclick="deleteUser({{ user.id }})">Supprimer</button>
+                <button class="btn-delete" data-user-id="{{ user.id }}">Delete</button>
             </li>
             {% endfor %}
         </ul>
@@ -379,33 +424,35 @@
     <!-- Modal Ajout Utilisateur -->
     <div id="addUserModal" class="modal">
         <div class="modal-content">
-            <h3 class="modal-title">Ajouter un Utilisateur</h3>
+            <h3 class="modal-title">Add User</h3>
             <form id="addUserForm">
                 <div class="form-group">
                     <label class="form-label" for="email">Email</label>
                     <input type="email" id="email" name="email" class="form-input" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="password">Mot de passe</label>
+                    <label class="form-label" for="password">Password</label>
                     <input type="password" id="password" name="password" class="form-input" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="storage_limit">Limite de stockage (GB)</label>
+                    <label class="form-label" for="storage_limit">Storage Limit (GB)</label>
                     <input type="number" id="storage_limit" name="storage_limit" class="form-input" value="5" min="1" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">
                         <input type="checkbox" id="is_admin" name="is_admin">
-                        Administrateur
+                        Administrator
                     </label>
                 </div>
                 <div class="modal-buttons">
-                    <button type="button" class="btn-cancel" onclick="hideAddUserModal()">Annuler</button>
-                    <button type="submit" class="btn-submit">Ajouter</button>
+                    <button type="button" class="btn-cancel" onclick="hideAddUserModal()">Cancel</button>
+                    <button type="submit" class="btn-submit">Add</button>
                 </div>
             </form>
         </div>
     </div>
+    
+    <div id="notification" class="notification"></div>
     
     <script>
         function showAddUserModal() {
@@ -422,7 +469,7 @@
             const formData = {
                 email: document.getElementById('email').value,
                 password: document.getElementById('password').value,
-                storage_limit: document.getElementById('storage_limit').value * 1024 * 1024 * 1024, // Conversion en bytes
+                storage_limit: document.getElementById('storage_limit').value * 1024 * 1024 * 1024, // Convert to bytes
                 is_admin: document.getElementById('is_admin').checked
             };
             
@@ -443,31 +490,69 @@
                     alert(data.message);
                 }
             } catch (error) {
-                alert('Une erreur est survenue');
+                alert('An error occurred');
             }
         });
         
+        function showNotification(message, type = 'success') {
+            const notif = document.getElementById('notification');
+            notif.textContent = message;
+            notif.className = `notification show ${type}`;
+            setTimeout(() => {
+                notif.classList.remove('show');
+            }, 3500);
+        }
+        
         async function deleteUser(userId) {
-            if (!confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
+            if (!confirm('Are you sure you want to delete this user?')) {
                 return;
             }
-            
+            const url = `/admin/users/${userId}`;
+            console.log('Attempting to delete user with URL:', url);
             try {
-                const response = await fetch(`/admin/users?user_id=${userId}`, {
-                    method: 'DELETE'
+                const response = await fetch(url, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin'
                 });
-                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                if (response.redirected) {
+                    console.log('Redirected to:', response.url);
+                    window.location.href = response.url;
+                    return;
+                }
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const data = await response.json();
-                
+                console.log('Response data:', data);
                 if (data.success) {
-                    location.reload();
+                    showNotification('User deleted successfully', 'success');
+                    setTimeout(() => location.reload(), 1200);
                 } else {
-                    alert(data.message);
+                    showNotification(data.message || 'Failed to delete user', 'error');
                 }
             } catch (error) {
-                alert('Une erreur est survenue');
+                console.error('Error details:', error);
+                if (error.message.includes('<!DOCTYPE')) {
+                    showNotification('Your session has expired. Please log in again.', 'error');
+                    setTimeout(() => window.location.href = '/login', 1500);
+                } else {
+                    showNotification('Error: ' + error.message, 'error');
+                }
             }
         }
+        
+        // Ajout d'un event listener pour tous les boutons de suppression utilisateur
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                deleteUser(userId);
+            });
+        });
     </script>
 </body>
 </html> 
