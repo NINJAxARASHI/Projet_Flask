@@ -620,6 +620,7 @@ def admin_panel():
                 storage_formatted = f"{storage_used/(1024**3):.1f} GB"
                 
             user_storage.append({
+                'id': user.id,
                 'email': user.email,
                 'storage_used': storage_formatted,
                 'storage_limit': f"{user.storage_limit/(1024**3):.1f} GB",
@@ -694,23 +695,28 @@ def manage_users():
             db.session.rollback()
             return jsonify({'success': False, 'message': str(e)})
     
-    elif request.method == 'DELETE':
-        try:
-            user_id = request.args.get('user_id', type=int)
-            if not user_id:
-                return jsonify({'success': False, 'message': 'User ID is required'})
-            
-            user = User.query.get_or_404(user_id)
-            if user.id == current_user.id:
-                return jsonify({'success': False, 'message': 'Cannot delete your own account'})
-            
-            db.session.delete(user)
-            db.session.commit()
-            
-            return jsonify({'success': True, 'message': 'User deleted successfully'})
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'success': False, 'message': str(e)})
+@app.route('/admin/users/<int:user_id>', methods=['DELETE'])
+@login_required
+def delete_user(user_id):
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'})
+
+    try:
+        user = User.query.get_or_404(user_id)
+
+        if user.is_admin:
+            return jsonify({'success': False, 'message': 'Cannot delete an admin user'})
+
+        if user.id == current_user.id:
+            return jsonify({'success': False, 'message': 'Cannot delete your own account'})
+
+        db.session.delete(user)
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': 'User deleted successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)})
 
 @app.route('/api/folders/<int:folder_id>', methods=['DELETE'])
 @login_required
