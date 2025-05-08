@@ -6,6 +6,13 @@ from werkzeug.utils import secure_filename
 import os
 from datetime import datetime, timedelta
 import uuid
+from cryptography.hazmat.primitives import serialization, hashes, padding
+from cryptography.hazmat.primitives.asymmetric import rsa, padding as asymmetric_padding
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+import base64
+import hmac
+import hashlib
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
@@ -33,6 +40,7 @@ class User(UserMixin, db.Model):
     last_login = db.Column(db.DateTime)
     files = db.relationship('File', backref='owner', lazy=True)
     folders = db.relationship('Folder', backref='owner', lazy=True)
+    groups = db.relationship('Group', secondary='user_groups', backref=db.backref('users', lazy='dynamic'))
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -60,7 +68,53 @@ class File(db.Model):
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_starred = db.Column(db.Boolean, default=False)
-    status = db.Column(db.String(20), nullable=False, default='complete')  # Modifié pour être non nullable avec une valeur par défaut
+    status = db.Column(db.String(20), nullable=False, default='complete')
+
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    encrypted_content = db.Column(db.Text, nullable=False)  # Message chiffré avec AES
+    encrypted_aes_key = db.Column(db.Text, nullable=False)  # Clé AES chiffrée avec RSA
+    encrypted_hmac_key = db.Column(db.Text, nullable=False)  # Clé HMAC chiffrée avec RSA
+    iv = db.Column(db.Text, nullable=False)  # Vecteur d'initialisation pour AES
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_read = db.Column(db.Boolean, default=False)
+    signature = db.Column(db.Text, nullable=False)  # Signature du message
+    hmac = db.Column(db.Text, nullable=False)  # HMAC pour vérifier l'intégrité
+    original_content = db.Column(db.Text)  # Message original pour l'expéditeur
+    is_deleted_for_receiver = db.Column(db.Boolean, default=False)  # Indique si le message est supprimé pour le destinataire
+    
+    sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
+    receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_messages')
+
+# Table d'association pour la relation many-to-many entre User et Group
+user_groups = db.Table('user_groups',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('group_id', db.Integer, db.ForeignKey('group.id'), primary_key=True)
+)
+
+class Group(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    description = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Announcement(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    to_all = db.Column(db.Boolean, default=False)
+    groups = db.relationship('Group', secondary='announcement_groups', backref=db.backref('announcements', lazy='dynamic'))
+    author = db.relationship('User', backref='announcements')
+
+# Table d'association entre Announcement et Group
+announcement_groups = db.Table('announcement_groups',
+    db.Column('announcement_id', db.Integer, db.ForeignKey('announcement.id'), primary_key=True),
+    db.Column('group_id', db.Integer, db.ForeignKey('group.id'), primary_key=True)
+)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -487,75 +541,34 @@ def forgot_password():
     
     return render_template('forgot_password.html')
 
-@app.route('/report')
+@app.route('/report', methods=['GET', 'POST'])
 @login_required
 def report():
-    if not current_user.is_admin:
-        flash('Access denied', 'error')
-        return redirect(url_for('user_dashboard'))
-    
-    # Récupérer les statistiques pour le rapport
-    total_users = User.query.count()
-    total_files = File.query.count()
-    total_folders = Folder.query.count()
-    total_storage_used = db.session.query(db.func.sum(File.size)).scalar() or 0
-    
-    # Formatage de la taille totale
-    if total_storage_used < 1024:
-        total_storage_formatted = f"{total_storage_used} B"
-    elif total_storage_used < 1024**2:
-        total_storage_formatted = f"{total_storage_used/1024:.1f} KB"
-    elif total_storage_used < 1024**3:
-        total_storage_formatted = f"{total_storage_used/(1024**2):.1f} MB"
-    else:
-        total_storage_formatted = f"{total_storage_used/(1024**3):.1f} GB"
-    
-    # Récupérer les statistiques par utilisateur
-    user_stats = []
-    for user in User.query.all():
-        user_files = File.query.filter_by(owner_id=user.id).all()
-        user_folders = Folder.query.filter_by(owner_id=user.id).all()
-        storage_used = sum(f.size for f in user_files)
-        
-        # Formatage de la taille utilisée
-        if storage_used < 1024:
-            storage_formatted = f"{storage_used} B"
-        elif storage_used < 1024**2:
-            storage_formatted = f"{storage_used/1024:.1f} KB"
-        elif storage_used < 1024**3:
-            storage_formatted = f"{storage_used/(1024**2):.1f} MB"
+    if request.method == 'POST':
+        title = request.form.get('title')
+        content = request.form.get('content')
+        group_ids = request.form.getlist('groups')
+        to_all = 'to_all' in request.form
+        if title and content:
+            ann = Announcement(title=title, content=content, author_id=current_user.id, to_all=to_all)
+            if not to_all and group_ids:
+                groups = Group.query.filter(Group.id.in_(group_ids)).all()
+                ann.groups = groups
+            db.session.add(ann)
+            db.session.commit()
+            flash('Annonce publiée !', 'success')
         else:
-            storage_formatted = f"{storage_used/(1024**3):.1f} GB"
-        
-        # Calcul du pourcentage d'utilisation par rapport au stockage total
-        storage_percent = 0
-        if total_storage_used > 0:
-            storage_percent = (storage_used / total_storage_used) * 100
-        
-        # Calcul du pourcentage d'utilisation par rapport à la limite de l'utilisateur
-        limit_percent = 0
-        if user.storage_limit > 0:
-            limit_percent = (storage_used / user.storage_limit) * 100
-        
-        user_stats.append({
-            'email': user.email,
-            'is_admin': user.is_admin,
-            'files_count': len(user_files),
-            'folders_count': len(user_folders),
-            'storage_used': storage_formatted,
-            'storage_bytes': storage_used,  # Ajout des bytes pour le calcul des pourcentages
-            'storage_percent': round(storage_percent, 1),  # Pourcentage du stockage total
-            'limit_percent': round(limit_percent, 1),  # Pourcentage de la limite utilisateur
-            'last_login': user.last_login.strftime('%Y-%m-%d %H:%M:%S') if user.last_login else 'Never'
-        })
-    
-    return render_template('report.html',
-                         total_users=total_users,
-                         total_files=total_files,
-                         total_folders=total_folders,
-                         total_storage=total_storage_formatted,
-                         total_storage_bytes=total_storage_used,  # Ajout des bytes pour le calcul des pourcentages
-                         user_stats=user_stats)
+            flash('Titre et contenu requis.', 'error')
+        return redirect(url_for('report'))
+    # Afficher les annonces visibles pour l'utilisateur
+    user_group_ids = [g.id for g in current_user.groups] if hasattr(current_user, 'groups') else []
+    announcements = Announcement.query.filter(
+        (Announcement.to_all == True) |
+        (Announcement.groups.any(Group.id.in_(user_group_ids))) |
+        (Announcement.author_id == current_user.id)
+    ).order_by(Announcement.created_at.desc()).all()
+    all_groups = Group.query.all()
+    return render_template('announcements.html', announcements=announcements, all_groups=all_groups)
 
 @app.route('/contact_us', methods=['GET', 'POST'])
 @login_required
@@ -671,6 +684,7 @@ def manage_users():
             if User.query.filter_by(email=email).first():
                 return jsonify({'success': False, 'message': 'Email already exists'})
             
+            # Créer le nouvel utilisateur
             new_user = User(
                 email=email,
                 is_admin=is_admin,
@@ -679,11 +693,19 @@ def manage_users():
             new_user.set_password(password)
             
             db.session.add(new_user)
+            db.session.flush()  # Pour obtenir l'ID de l'utilisateur avant le commit
+            
+            # Générer une nouvelle paire de clés RSA
+            private_key, public_key = generate_rsa_keys()
+            
+            # Sauvegarder uniquement les clés RSA
+            save_rsa_keys(new_user.id, private_key, public_key)
+            
             db.session.commit()
             
             return jsonify({
                 'success': True,
-                'message': 'User created successfully',
+                'message': 'User created successfully with RSA keys',
                 'user': {
                     'id': new_user.id,
                     'email': new_user.email,
@@ -694,7 +716,7 @@ def manage_users():
         except Exception as e:
             db.session.rollback()
             return jsonify({'success': False, 'message': str(e)})
-    
+
 @app.route('/admin/users/<int:user_id>', methods=['DELETE'])
 @login_required
 def delete_user(user_id):
@@ -752,28 +774,616 @@ def delete_folder(folder_id):
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
 
+@app.route('/messagerie')
+@login_required
+def messagerie():
+    # Récupérer tous les utilisateurs pour la liste des contacts
+    users = User.query.filter(User.id != current_user.id).all()
+    
+    # Récupérer les conversations récentes
+    conversations = db.session.query(
+        Message,
+        User
+    ).join(
+        User,
+        ((Message.sender_id == User.id) & (Message.receiver_id == current_user.id)) |
+        ((Message.receiver_id == User.id) & (Message.sender_id == current_user.id))
+    ).order_by(Message.created_at.desc()).all()
+    
+    # Organiser les conversations par utilisateur
+    chat_partners = {}
+    
+    # D'abord, ajouter tous les utilisateurs comme partenaires potentiels
+    for user in users:
+        chat_partners[user.id] = {
+            'user': user,
+            'last_message': None,
+            'unread_count': 0
+        }
+    
+    # Ensuite, mettre à jour avec les conversations existantes
+    for message, user in conversations:
+        partner_id = user.id
+        if partner_id in chat_partners:
+            if not chat_partners[partner_id]['last_message'] or message.created_at > chat_partners[partner_id]['last_message'].created_at:
+                chat_partners[partner_id]['last_message'] = message
+            if not message.is_read and message.receiver_id == current_user.id:
+                chat_partners[partner_id]['unread_count'] += 1
+    
+    # Convertir le dictionnaire en liste et trier par date du dernier message
+    chat_partners_list = list(chat_partners.values())
+    chat_partners_list.sort(key=lambda x: x['last_message'].created_at if x['last_message'] else datetime.min, reverse=True)
+    
+    return render_template('messagerie.html', 
+                         users=users,
+                         chat_partners=chat_partners_list)
+
+def generate_hmac(message, key):
+    """Génère un HMAC pour vérifier l'intégrité du message"""
+    h = hmac.new(key, message.encode(), hashlib.sha256)
+    return base64.b64encode(h.digest()).decode()
+
+def verify_hmac(message, hmac_value, key):
+    """Vérifie l'intégrité du message avec le HMAC"""
+    expected_hmac = generate_hmac(message, key)
+    return hmac.compare_digest(hmac_value, expected_hmac)
+
+def sign_message(message, private_key_pem):
+    """Signe un message avec la clé privée RSA"""
+    private_key = serialization.load_pem_private_key(
+        private_key_pem.encode(),
+        password=None,
+        backend=default_backend()
+    )
+    
+    signature = private_key.sign(
+        message.encode(),
+        asymmetric_padding.PSS(
+            mgf=asymmetric_padding.MGF1(hashes.SHA256()),
+            salt_length=asymmetric_padding.PSS.MAX_LENGTH
+        ),
+        hashes.SHA256()
+    )
+    
+    return base64.b64encode(signature).decode()
+
+def verify_signature(message, signature, public_key_pem):
+    """Vérifie la signature d'un message avec la clé publique RSA"""
+    public_key = serialization.load_pem_public_key(
+        public_key_pem.encode(),
+        backend=default_backend()
+    )
+    
+    try:
+        public_key.verify(
+            base64.b64decode(signature),
+            message.encode(),
+            asymmetric_padding.PSS(
+                mgf=asymmetric_padding.MGF1(hashes.SHA256()),
+                salt_length=asymmetric_padding.PSS.MAX_LENGTH
+            ),
+            hashes.SHA256()
+        )
+        return True
+    except Exception:
+        return False
+
+@app.route('/api/messages', methods=['POST'])
+@login_required
+def send_message():
+    try:
+        data = request.get_json()
+        receiver_id = data.get('receiver_id')
+        content = data.get('content')
+        
+        if not receiver_id or not content:
+            return jsonify({'success': False, 'message': 'Missing required fields'})
+        
+        # Vérifier si le destinataire existe
+        receiver = User.query.get_or_404(receiver_id)
+        
+        # Vérifier que l'utilisateur ne s'envoie pas un message à lui-même
+        if receiver_id == current_user.id:
+            return jsonify({'success': False, 'message': 'Cannot send message to yourself'})
+        
+        # 1. Génération des clés pour ce message
+        message_aes_key = generate_random_aes_key()  # Clé AES pour chiffrer le message
+        hmac_key = os.urandom(32)  # Clé HMAC séparée pour vérifier l'intégrité
+        iv = generate_random_iv()  # Vecteur d'initialisation pour AES
+        
+        # 2. Préparation du message
+        timestamp = datetime.utcnow().isoformat()
+        message_with_timestamp = f"{content}|{timestamp}"
+        
+        # 3. Génération du HMAC pour vérifier l'intégrité
+        message_hmac = generate_hmac(message_with_timestamp, hmac_key)
+        
+        # 4. Chiffrement du message avec AES
+        encrypted_content = encrypt_with_aes(message_with_timestamp, message_aes_key, iv)
+        
+        # 5. Récupération des clés RSA
+        receiver_public_key = get_user_public_key(receiver_id)
+        sender_private_key = get_user_private_key(current_user.id)
+        
+        if not receiver_public_key or not sender_private_key:
+            return jsonify({'success': False, 'message': 'Missing encryption keys'})
+        
+        # 6. Chiffrement des clés symétriques avec la clé publique du destinataire
+        encrypted_aes_key = encrypt_with_rsa(message_aes_key, receiver_public_key)
+        encrypted_hmac_key = encrypt_with_rsa(hmac_key, receiver_public_key)
+        
+        # 7. Signature du message avec la clé privée de l'expéditeur
+        message_signature = sign_message(message_with_timestamp, sender_private_key)
+        
+        # 8. Création du message dans la base de données
+        message = Message(
+            sender_id=current_user.id,
+            receiver_id=receiver_id,
+            encrypted_content=encrypted_content,
+            encrypted_aes_key=encrypted_aes_key,
+            encrypted_hmac_key=encrypted_hmac_key,
+            iv=iv,
+            signature=message_signature,
+            hmac=message_hmac,
+            original_content=content  # Stocker le message original pour l'expéditeur
+        )
+        
+        db.session.add(message)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': {
+                'id': message.id,
+                'sender_id': message.sender_id,
+                'content': content,
+                'created_at': message.created_at.strftime('%H:%M'),
+                'is_read': message.is_read
+            }
+        })
+    except Exception as e:
+        print(f"Error sending message: {str(e)}")
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/messages/<int:message_id>/delete', methods=['POST'])
+@login_required
+def delete_message(message_id):
+    try:
+        # Récupérer le message
+        message = Message.query.get_or_404(message_id)
+        
+        # Vérifier que l'utilisateur est bien l'expéditeur
+        if message.sender_id != current_user.id:
+            return jsonify({
+                'success': False,
+                'message': 'Vous n\'êtes pas autorisé à supprimer ce message'
+            }), 403
+        
+        # Supprimer le message de la base de données
+        db.session.delete(message)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Message supprimé pour les deux utilisateurs'
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@app.route('/api/messages/<int:user_id>', methods=['GET'])
+@login_required
+def get_messages(user_id):
+    try:
+        # Vérifier que l'utilisateur demandé existe
+        other_user = User.query.get_or_404(user_id)
+        
+        # Récupérer les messages
+        messages = Message.query.filter(
+            ((Message.sender_id == current_user.id) & (Message.receiver_id == user_id)) |
+            ((Message.sender_id == user_id) & (Message.receiver_id == current_user.id))
+        ).order_by(Message.created_at).all()
+        
+        # Marquer les messages comme lus
+        for message in messages:
+            if message.receiver_id == current_user.id and not message.is_read:
+                message.is_read = True
+        db.session.commit()
+        
+        # Déchiffrer les messages
+        decrypted_messages = []
+        for message in messages:
+            try:
+                # Si on est le destinataire et que le message a été supprimé, on le saute
+                if message.receiver_id == current_user.id and message.is_deleted_for_receiver:
+                    continue
+                    
+                if message.sender_id == current_user.id:
+                    # Si on est l'expéditeur, utiliser le message original
+                    content = message.original_content
+                else:
+                    # Si on est le destinataire
+                    private_key = get_user_private_key(current_user.id)
+                    public_key = get_user_public_key(user_id)
+                    
+                    # Déchiffrer le message
+                    aes_key = decrypt_with_rsa(message.encrypted_aes_key, private_key)
+                    decrypted_content = decrypt_with_aes(
+                        message.encrypted_content,
+                        aes_key,
+                        message.iv
+                    )
+                    
+                    # Vérifier la signature
+                    if not verify_signature(decrypted_content, message.signature, public_key):
+                        print(f"Invalid signature for message {message.id}")
+                        continue
+                    
+                    # Vérifier l'intégrité avec HMAC
+                    hmac_key = decrypt_with_rsa(message.encrypted_hmac_key, private_key)
+                    if not verify_hmac(decrypted_content, message.hmac, hmac_key):
+                        print(f"Invalid HMAC for message {message.id}")
+                        continue
+                    
+                    content, timestamp = decrypted_content.split('|')
+                
+                decrypted_messages.append({
+                    'id': message.id,
+                    'sender_id': message.sender_id,
+                    'content': content,
+                    'created_at': message.created_at.strftime('%H:%M'),
+                    'is_read': message.is_read,
+                    'is_deleted_for_receiver': message.is_deleted_for_receiver
+                })
+            except Exception as e:
+                print(f"Error processing message {message.id}: {str(e)}")
+                continue
+        
+        return jsonify({'success': True, 'messages': decrypted_messages})
+    except Exception as e:
+        print(f"Error in get_messages: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/messages/unread', methods=['GET'])
+@login_required
+def get_unread_count():
+    count = Message.query.filter_by(
+        receiver_id=current_user.id,
+        is_read=False
+    ).count()
+    
+    return jsonify({'success': True, 'count': count})
+
+# Ajouter une fonction pour initialiser les clés RSA pour les utilisateurs existants
+def initialize_missing_rsa_keys():
+    try:
+        users = User.query.all()
+        for user in users:
+            # Vérifier si l'utilisateur a déjà des clés RSA
+            if not get_user_public_key(user.id):
+                # Générer une nouvelle paire de clés RSA
+                private_key, public_key = generate_rsa_keys()
+                
+                # Sauvegarder les clés RSA
+                save_rsa_keys(user.id, private_key, public_key)
+                
+                print(f"Initialized RSA keys for user {user.email}")
+    except Exception as e:
+        print(f"Error initializing RSA keys: {str(e)}")
+
+def generate_rsa_keys():
+    """Génère une paire de clés RSA (publique/privée)"""
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+        backend=default_backend()
+    )
+    public_key = private_key.public_key()
+    
+    # Sérialiser les clés
+    private_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    )
+    public_pem = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+    
+    return private_pem.decode(), public_pem.decode()
+
+def save_rsa_keys(user_id, private_key, public_key):
+    """Sauvegarde les clés RSA d'un utilisateur"""
+    # Créer le dossier keys s'il n'existe pas
+    if not os.path.exists('keys'):
+        os.makedirs('keys')
+    
+    # Sauvegarder la clé privée
+    with open(f'keys/private_key_{user_id}.pem', 'w') as f:
+        f.write(private_key)
+    
+    # Sauvegarder la clé publique
+    with open(f'keys/public_key_{user_id}.pem', 'w') as f:
+        f.write(public_key)
+
+def get_user_public_key(user_id):
+    """Récupère la clé publique d'un utilisateur"""
+    try:
+        with open(f'keys/public_key_{user_id}.pem', 'r') as f:
+            return f.read()
+    except FileNotFoundError:
+        return None
+
+def get_user_private_key(user_id):
+    """Récupère la clé privée d'un utilisateur"""
+    try:
+        with open(f'keys/private_key_{user_id}.pem', 'r') as f:
+            return f.read()
+    except FileNotFoundError:
+        return None
+
+def generate_random_aes_key():
+    """Génère une clé AES aléatoire"""
+    return os.urandom(32)  # 256 bits
+
+def generate_random_iv():
+    """Génère un vecteur d'initialisation aléatoire pour AES"""
+    return os.urandom(16)  # 128 bits
+
+def encrypt_with_aes(data, key, iv):
+    """Chiffre des données avec AES"""
+    cipher = Cipher(
+        algorithms.AES(key),
+        modes.CBC(iv),
+        backend=default_backend()
+    )
+    encryptor = cipher.encryptor()
+    
+    # Padding des données
+    padder = padding.PKCS7(128).padder()
+    padded_data = padder.update(data.encode()) + padder.finalize()
+    
+    encrypted = encryptor.update(padded_data) + encryptor.finalize()
+    return base64.b64encode(encrypted).decode()
+
+def decrypt_with_aes(encrypted_data, key, iv):
+    """Déchiffre des données avec AES"""
+    cipher = Cipher(
+        algorithms.AES(key),
+        modes.CBC(iv),
+        backend=default_backend()
+    )
+    decryptor = cipher.decryptor()
+    
+    encrypted_bytes = base64.b64decode(encrypted_data)
+    padded_data = decryptor.update(encrypted_bytes) + decryptor.finalize()
+    
+    # Unpadding des données
+    unpadder = padding.PKCS7(128).unpadder()
+    data = unpadder.update(padded_data) + unpadder.finalize()
+    
+    return data.decode()
+
+def encrypt_with_rsa(data, public_key_pem):
+    """Chiffre des données avec une clé publique RSA"""
+    public_key = serialization.load_pem_public_key(
+        public_key_pem.encode(),
+        backend=default_backend()
+    )
+    
+    encrypted = public_key.encrypt(
+        data if isinstance(data, bytes) else data.encode(),
+        asymmetric_padding.OAEP(
+            mgf=asymmetric_padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    
+    return base64.b64encode(encrypted).decode()
+
+def decrypt_with_rsa(encrypted_data, private_key_pem):
+    """Déchiffre des données avec une clé privée RSA"""
+    private_key = serialization.load_pem_private_key(
+        private_key_pem.encode(),
+        password=None,
+        backend=default_backend()
+    )
+    
+    encrypted_bytes = base64.b64decode(encrypted_data)
+    decrypted = private_key.decrypt(
+        encrypted_bytes,
+        asymmetric_padding.OAEP(
+            mgf=asymmetric_padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    
+    return decrypted
+
+def get_or_create_user_keys(user_id):
+    """Récupère ou crée les clés RSA d'un utilisateur"""
+    private_key = get_user_private_key(user_id)
+    public_key = get_user_public_key(user_id)
+    
+    if not private_key or not public_key:
+        private_key, public_key = generate_rsa_keys()
+        save_rsa_keys(user_id, private_key, public_key)
+    
+    return public_key, private_key
+
+@app.route('/admin/users/<int:user_id>/reset-password', methods=['POST'])
+@login_required
+def reset_user_password(user_id):
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'})
+    
+    try:
+        user = User.query.get_or_404(user_id)
+        data = request.get_json()
+        new_password = data.get('new_password')
+        
+        if not new_password:
+            return jsonify({'success': False, 'message': 'New password is required'})
+        
+        user.set_password(new_password)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Password reset successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/admin/groups', methods=['GET', 'POST'])
+@login_required
+def manage_groups():
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'})
+    
+    if request.method == 'GET':
+        groups = Group.query.all()
+        return jsonify({
+            'success': True,
+            'groups': [{
+                'id': group.id,
+                'name': group.name,
+                'description': group.description,
+                'user_count': group.users.count()
+            } for group in groups]
+        })
+    
+    elif request.method == 'POST':
+        try:
+            data = request.get_json()
+            name = data.get('name')
+            description = data.get('description', '')
+            
+            if not name:
+                return jsonify({'success': False, 'message': 'Group name is required'})
+            
+            existing_group = Group.query.filter_by(name=name).first()
+            if existing_group:
+                return jsonify({'success': False, 'message': 'Group name already exists'})
+            
+            new_group = Group(name=name, description=description)
+            db.session.add(new_group)
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Group created successfully',
+                'group': {
+                    'id': new_group.id,
+                    'name': new_group.name,
+                    'description': new_group.description
+                }
+            })
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/admin/groups/<int:group_id>/users', methods=['GET', 'POST', 'DELETE'])
+@login_required
+def manage_group_users(group_id):
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'})
+    
+    group = Group.query.get_or_404(group_id)
+    
+    if request.method == 'GET':
+        return jsonify({
+            'success': True,
+            'users': [{
+                'id': user.id,
+                'email': user.email
+            } for user in group.users]
+        })
+    
+    elif request.method == 'POST':
+        try:
+            data = request.get_json()
+            user_id = data.get('user_id')
+            
+            if not user_id:
+                return jsonify({'success': False, 'message': 'User ID is required'})
+            
+            user = User.query.get_or_404(user_id)
+            if user in group.users:
+                return jsonify({'success': False, 'message': 'User is already in this group'})
+            
+            group.users.append(user)
+            db.session.commit()
+            
+            return jsonify({'success': True, 'message': 'User added to group successfully'})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'message': str(e)})
+    
+    elif request.method == 'DELETE':
+        try:
+            data = request.get_json()
+            user_id = data.get('user_id')
+            
+            if not user_id:
+                return jsonify({'success': False, 'message': 'User ID is required'})
+            
+            user = User.query.get_or_404(user_id)
+            if user not in group.users:
+                return jsonify({'success': False, 'message': 'User is not in this group'})
+            
+            group.users.remove(user)
+            db.session.commit()
+            
+            return jsonify({'success': True, 'message': 'User removed from group successfully'})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'message': str(e)})
+
 if __name__ == '__main__':
     with app.app_context():
-        # Supprimer toutes les tables existantes
-        db.drop_all()
-        # Créer toutes les tables
-        db.create_all()
-        
-        # Initialize default users if they don't exist
-        if not User.query.filter_by(email='user@example.com').first():
-            # Create normal user
-            user = User(email='user@example.com')
-            user.set_password('user123')
-            user.is_admin = False
-            user.storage_limit = 2 * 1024 * 1024 * 1024  # 2GB
-            db.session.add(user)
-
-            # Create admin user
-            admin = User(email='admin@example.com')
-            admin.set_password('admin123')
-            admin.is_admin = True
-            admin.storage_limit = 5 * 1024 * 1024 * 1024  # 5GB
-            db.session.add(admin)
+        print("Initializing database...")
+        # Vérifier si la base de données existe
+        if not os.path.exists('cloud.db'):
+            print("Creating new database...")
+            # Créer toutes les tables
+            db.create_all()
             
-            db.session.commit()
+            print("Creating default users...")
+            # Initialize default users if they don't exist
+            if not User.query.filter_by(email='user@example.com').first():
+                # Create normal user
+                user = User(email='user@example.com')
+                user.set_password('user123')
+                user.is_admin = False
+                user.storage_limit = 2 * 1024 * 1024 * 1024  # 2GB
+                db.session.add(user)
+                print("Created normal user: user@example.com")
+
+                # Create admin user
+                admin = User(email='admin@example.com')
+                admin.set_password('admin123')
+                admin.is_admin = True
+                admin.storage_limit = 5 * 1024 * 1024 * 1024  # 5GB
+                db.session.add(admin)
+                print("Created admin user: admin@example.com")
+                
+                db.session.commit()
+                print("Users committed to database")
+                
+                print("Initializing RSA keys for users...")
+                # Initialiser les clés RSA pour les utilisateurs par défaut
+                initialize_missing_rsa_keys()
+                print("RSA keys initialized")
+        else:
+            print("Database already exists, skipping initialization...")
+            # Vérifier et créer les tables si elles n'existent pas
+            db.create_all()
+    
+    print("Starting Flask application...")
     app.run(debug=True)
