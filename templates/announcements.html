@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>General Announcements</title>
+    <style>
+        body {
+            background: linear-gradient(to right, #36d1dc, #0a5fb4);
+            color: #222;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .main-flex {
+            display: flex;
+            gap: 32px;
+            max-width: 1100px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 16px rgba(10,95,180,0.10);
+            padding: 32px 28px 28px 28px;
+        }
+        .announcements-pane {
+            flex: 3;
+            border-right: 2px solid #eaf4fb;
+            padding-right: 28px;
+            max-height: 75vh;
+            overflow-y: auto;
+        }
+        .form-pane {
+            flex: 2;
+            padding-left: 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        h1 {
+            color: #0a5fb4;
+            text-align: left;
+            margin-bottom: 30px;
+            font-size: 2.1rem;
+        }
+        .announce-form {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px 18px 10px 18px;
+            margin-bottom: 32px;
+            box-shadow: 0 2px 8px rgba(10,95,180,0.05);
+        }
+        .announce-form label {
+            font-weight: bold;
+            color: #0a5fb4;
+        }
+        .announce-form input[type="text"],
+        .announce-form textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0 18px 0;
+            border: 1.5px solid #cce0f6;
+            border-radius: 7px;
+            font-size: 16px;
+            background: #fafdff;
+        }
+        .announce-form textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .announce-form .group-select {
+            margin-bottom: 10px;
+            background: #eaf4fb;
+            border-radius: 8px;
+            padding: 14px 12px 10px 12px;
+            border: 1.5px solid #b3d8f6;
+        }
+        .announce-form .group-select label {
+            color: #0a5fb4;
+            font-size: 15px;
+            font-weight: bold;
+        }
+        .announce-form .to-all-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+            background: #d6eaff;
+            border-radius: 6px;
+            padding: 7px 12px;
+            font-size: 15px;
+            font-weight: bold;
+            color: #0a5fb4;
+            border: 1px solid #b3d8f6;
+            width: fit-content;
+        }
+        .announce-form .to-all-label input[type="checkbox"] {
+            accent-color: #0a5fb4;
+            width: 18px;
+            height: 18px;
+        }
+        .announce-form select[multiple] {
+            width: 100%;
+            min-height: 90px;
+            border: 1.5px solid #0a5fb4;
+            border-radius: 7px;
+            background: #fafdff;
+            font-size: 15px;
+            margin-bottom: 8px;
+            padding: 8px 6px;
+            transition: border-color 0.2s;
+        }
+        .announce-form select[multiple]:focus {
+            border-color: #36d1dc;
+            outline: none;
+        }
+        .announce-form select[multiple] option {
+            padding: 6px 8px 6px 28px;
+            background-repeat: no-repeat;
+            background-position: 6px center;
+        }
+        .announce-form button {
+            background: linear-gradient(90deg, #0a5fb4, #36d1dc);
+            color: #fff;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+        .announce-form button:hover {
+            background: linear-gradient(90deg, #36d1dc, #0a5fb4);
+            transform: translateY(-2px);
+        }
+        .announcement {
+            background: #fafdff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(10,95,180,0.04);
+            margin-bottom: 22px;
+            padding: 18px 18px 10px 18px;
+        }
+        .announcement-title {
+            color: #0a5fb4;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        .announcement-meta {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .announcement-content {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .announcement-groups {
+            font-size: 13px;
+            color: #0a5fb4;
+            margin-bottom: 4px;
+        }
+        .no-announcement {
+            text-align: center;
+            color: #888;
+            margin-top: 40px;
+        }
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            background-color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            width: fit-content;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            color: black;
+            border: none;
+            font-size: 18px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .back-button:hover {
+            background-color: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        .back-button svg {
+            margin-right: 10px;
+        }
+        @media (max-width: 900px) {
+            .main-flex {
+                flex-direction: column;
+                gap: 18px;
+                padding: 18px 6vw 18px 6vw;
+            }
+            .announcements-pane, .form-pane {
+                padding: 0 !important;
+                border: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="background: none; box-shadow: none; padding: 0; max-width: 100vw;">
+        <div style="display: flex; align-items: flex-start; margin: 30px 0 30px 30px;">
+            <a href="{{ url_for('admin_dashboard' if current_user.is_admin else 'user_dashboard') }}" class="back-button">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="11" stroke="black" stroke-width="2"/>
+                    <path d="M15 8L9 12L15 16" stroke="black" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Back
+            </a>
+        </div>
+        <div class="main-flex">
+            <div class="announcements-pane">
+                <h1>General Announcements</h1>
+                {% if announcements %}
+                    {% for ann in announcements %}
+                        <div class="announcement">
+                            <div class="announcement-title">{{ ann.title }}</div>
+                            <div class="announcement-meta">
+                                Posted by {{ ann.author.email }} on {{ ann.created_at.strftime('%d/%m/%Y %H:%M') }}
+                            </div>
+                            <div class="announcement-content">{{ ann.content }}</div>
+                            <div class="announcement-groups">
+                                {% if ann.to_all %}
+                                    <strong>For: All users</strong>
+                                {% else %}
+                                    <strong>Groups:</strong>
+                                    {% for group in ann.groups %}{{ group.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-announcement">No announcements yet.</div>
+                {% endif %}
+            </div>
+            <div class="form-pane">
+                <form class="announce-form" method="post">
+                    <label for="title">Announcement title</label>
+                    <input type="text" id="title" name="title" maxlength="200" required>
+                    <label for="content">Content</label>
+                    <textarea id="content" name="content" maxlength="2000" required></textarea>
+                    <div class="group-select">
+                        <label>Target groups:</label><br>
+                        <label class="to-all-label">
+                            <input type="checkbox" name="to_all" id="to_all" onchange="toggleGroups(this)"> All users
+                        </label>
+                        <select name="groups" id="groups" multiple size="3" style="width:100%;" required>
+                            {% for group in all_groups %}
+                                <option value="{{ group.id }}">&#128101; {{ group.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <small>Select one or more groups (Ctrl/Cmd + click). If "All users" is checked, group selection is ignored.</small>
+                    </div>
+                    <button type="submit">Publish announcement</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        function toggleGroups(checkbox) {
+            const select = document.getElementById('groups');
+            select.disabled = checkbox.checked;
+            if (checkbox.checked) {
+                select.selectedIndex = -1;
+            }
+        }
+    </script>
+</body>
+</html> 

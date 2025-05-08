@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L-Cloud Networking</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style2.css') }}">
+    <style>
+        .messenger-container {
+            display: flex;
+            height: calc(100vh - 200px);
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 20px;
+            overflow: hidden;
+        }
+
+        .contacts-list {
+            width: 300px;
+            border-right: 1px solid #e0e0e0;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .contact {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        .contact:hover {
+            background-color: #e9ecef;
+        }
+
+        .contact.active {
+            background-color: #e3f2fd;
+        }
+
+        .contact-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #1565C0;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .contact-info {
+            flex: 1;
+        }
+
+        .contact-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .contact-status {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            background: white;
+        }
+
+        .chat-header .contact-avatar {
+            margin-right: 15px;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            max-width: 70%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message.sent {
+            margin-left: auto;
+        }
+
+        .message.received {
+            margin-right: auto;
+        }
+
+        .message-bubble {
+            padding: 12px 15px;
+            border-radius: 15px;
+            position: relative;
+            word-wrap: break-word;
+            max-width: 400px;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-line;
+            text-align: left !important;
+        }
+
+        .message.sent .message-bubble {
+            background: #1565C0;
+            color: white;
+            border-bottom-right-radius: 5px;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.received .message-bubble {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 5px;
+            margin-right: auto;
+            text-align: left;
+        }
+
+        .message-time {
+            font-size: 0.8em;
+            margin-top: 5px;
+            opacity: 0.7;
+        }
+
+        .message-input {
+            padding: 15px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            background: white;
+        }
+
+        .message-input input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 25px;
+            outline: none;
+            font-size: 1em;
+            margin-right: 10px;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #e0e4e7 0%, #42a5f5 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(65, 142, 201, 0.18);
+            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+            font-size: 2em;
+            margin-left: 12px;
+            outline: none;
+            border: 2px solid #fff;
+        }
+
+        .send-btn:hover, .send-btn:focus {
+            background: linear-gradient(135deg, #718fba 0%, #0d77cd 100%);
+            box-shadow: 0 6px 24px 0 rgba(33, 150, 243, 0.32), 0 0 0 4px #e3f2fd;
+            transform: scale(1.10);
+        }
+
+        .send-btn:active {
+            transform: scale(0.97);
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.18);
+        }
+
+        .unread-badge {
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+
+        .encryption-status {
+            font-size: 0.8em;
+            color: #28a745;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .encryption-status::before {
+            content: "🔒";
+            margin-right: 5px;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            background-color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            width: fit-content;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            color: black;
+            border: none;
+            font-size: 18px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            background-color: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .back-button svg {
+            margin-right: 10px;
+        }
+        
+        .emoji-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-right: 8px;
+            padding: 0;
+            outline: none;
+            display: flex;
+            align-items: center;
+            font-size: 1.5em;
+            transition: transform 0.1s;
+        }
+        .emoji-btn:active {
+            transform: scale(1.2);
+        }
+        .emoji-picker {
+            min-width: 180px;
+            font-size: 1.6em;
+            user-select: none;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            padding: 10px 12px;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 14px;
+            box-shadow: 0 4px 16px rgba(21,101,192,0.13);
+            position: absolute;
+            bottom: 60px;
+            margin-right: 20px;
+            z-index: 10;
+            transition: box-shadow 0.2s;
+        }
+        .emoji {
+            cursor: pointer;
+            padding: 4px 0;
+            border-radius: 8px;
+            text-align: center;
+            transition: background 0.15s, transform 0.1s;
+            font-size: 1.2em;
+        }
+        .emoji:hover {
+            background: #e3f2fd;
+            transform: scale(1.2);
+        }
+        .delete-message {
+            position: absolute;
+            right: -38px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #b0b0b0;
+            cursor: pointer;
+            padding: 5px;
+            opacity: 0;
+            transition: opacity 0.2s, color 0.2s, transform 0.1s;
+            font-size: 20px;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+        }
+        .message:hover .delete-message {
+            opacity: 1;
+        }
+        .delete-message:hover {
+            color: #ff2222;
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container" data-current-user-id="{{ current_user.id }}">
+        <div class="header">
+            <a href="{{ url_for('admin_dashboard' if current_user.is_admin else 'user_dashboard') }}" class="back-button">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="11" stroke="black" stroke-width="2"/>
+                    <path d="M15 8L9 12L15 16" stroke="black" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Back
+            </a>
+            <div class="header-right">
+                <a href="{{ url_for('report') }}" class="report">Annoucements</a>
+                <a href="{{ url_for('messagerie') }}" class="contact-btn">Networking</a>
+                <div class="profile-icon">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Profile Icon">
+                </div>
+            </div>
+        </div>
+
+        <h1>NETWORKING</h1>
+
+        <div class="messenger-container">
+            <div class="contacts-list">
+                {% for partner in chat_partners %}
+                <div class="contact" data-user-id="{{ partner.user.id }}">
+                    <div class="contact-avatar">{{ partner.user.email[0]|upper }}</div>
+                    <div class="contact-info">
+                        <div class="contact-name">{{ partner.user.email }}</div>
+                        <div class="contact-status">
+                            {% if partner.unread_count > 0 %}
+                            <span class="unread-badge">{{ partner.unread_count }}</span>
+                            {% endif %}
+                            {% if partner.last_message %}
+                            {{ partner.last_message.created_at.strftime('%H:%M') }}
+                            {% else %}
+                            No messages yet
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="chat-area">
+                <div class="chat-header">
+                    <div class="contact-avatar">👤</div>
+                    <div>
+                        <div class="contact-name">Select a contact</div>
+                        <div class="encryption-status">End-to-end encrypted</div>
+                    </div>
+                </div>
+
+                <div class="messages">
+                    <!-- Les messages seront chargés dynamiquement ici -->
+                </div>
+
+                <div class="message-input">
+                    <button class="emoji-btn" title="Ajouter un emoji" type="button" tabindex="-1">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#1565C0" stroke-width="2"/><path d="M8 15c.667 1 2 1.5 4 1.5s3.333-.5 4-1.5" stroke="#1565C0" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="10" r="1" fill="#1565C0"/><circle cx="15" cy="10" r="1" fill="#1565C0"/></svg>
+                    </button>
+                    <div class="emoji-picker" style="display:none;">
+                        <span class="emoji">😀</span><span class="emoji">😁</span><span class="emoji">😂</span><span class="emoji">🤣</span><span class="emoji">😃</span><span class="emoji">😄</span>
+                        <span class="emoji">😅</span><span class="emoji">😆</span><span class="emoji">😉</span><span class="emoji">😊</span><span class="emoji">😋</span><span class="emoji">😎</span>
+                        <span class="emoji">😍</span><span class="emoji">😘</span><span class="emoji">🥰</span><span class="emoji">😗</span><span class="emoji">😙</span><span class="emoji">😚</span>
+                        <span class="emoji">🙂</span><span class="emoji">🤗</span><span class="emoji">🤩</span><span class="emoji">🤔</span><span class="emoji">🤨</span><span class="emoji">😐</span>
+                        <span class="emoji">😑</span><span class="emoji">😶</span><span class="emoji">🙄</span><span class="emoji">😏</span><span class="emoji">😣</span><span class="emoji">😥</span>
+                        <span class="emoji">😮</span><span class="emoji">🤐</span><span class="emoji">😯</span><span class="emoji">😪</span><span class="emoji">😫</span><span class="emoji">🥱</span>
+                        <span class="emoji">😴</span><span class="emoji">😌</span><span class="emoji">😛</span><span class="emoji">😜</span><span class="emoji">😝</span><span class="emoji">🤤</span>
+                        <span class="emoji">😒</span><span class="emoji">😓</span><span class="emoji">😔</span><span class="emoji">😕</span><span class="emoji">🙃</span><span class="emoji">🤑</span>
+                        <span class="emoji">😲</span><span class="emoji">☹️</span><span class="emoji">🙁</span><span class="emoji">😖</span><span class="emoji">😞</span><span class="emoji">😟</span>
+                        <span class="emoji">😤</span><span class="emoji">😢</span><span class="emoji">😭</span><span class="emoji">😦</span><span class="emoji">😧</span><span class="emoji">😨</span>
+                        <span class="emoji">😩</span><span class="emoji">🤯</span><span class="emoji">😬</span><span class="emoji">😰</span><span class="emoji">😱</span><span class="emoji">🥵</span>
+                        <span class="emoji">🥶</span><span class="emoji">😳</span><span class="emoji">🤪</span><span class="emoji">😵</span><span class="emoji">🥴</span><span class="emoji">😠</span>
+                        <span class="emoji">😡</span><span class="emoji">🤬</span><span class="emoji">😷</span><span class="emoji">🤒</span><span class="emoji">🤕</span><span class="emoji">🤢</span>
+                        <span class="emoji">🤮</span><span class="emoji">🤧</span><span class="emoji">😇</span><span class="emoji">🥳</span><span class="emoji">🥺</span><span class="emoji">🤠</span>
+                        <span class="emoji">🥸</span><span class="emoji">😎</span><span class="emoji">🤓</span><span class="emoji">🧐</span><span class="emoji">😕</span><span class="emoji">😟</span>
+                        <span class="emoji">👍</span><span class="emoji">🙏</span><span class="emoji">🎉</span><span class="emoji">🔥</span><span class="emoji">❤️</span>
+                    </div>
+                    <input type="text" placeholder="Type your message..." disabled>
+                    <button class="send-btn" disabled>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M4 20c0-5.523 4.477-10 10-10h5.17l-2.59-2.59a1 1 0 1 1 1.42-1.42l4.3 4.3a1 1 0 0 1 0 1.42l-4.3 4.3a1 1 0 1 1-1.42-1.42L19.17 12H14c-4.418 0-8 3.582-8 8a1 1 0 1 1-2 0z" fill="#2196f3"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const currentUserId = parseInt(document.querySelector('.container').getAttribute('data-current-user-id'));
+        let currentChatPartner = null;
+        let messagePollingInterval = null;
+
+        // Palette emoji fonctionnelle
+        const emojiBtn = document.querySelector('.emoji-btn');
+        const emojiPicker = document.querySelector('.emoji-picker');
+        const messageInput = document.querySelector('.message-input input');
+
+        emojiBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'grid' : 'none';
+        });
+
+        document.querySelectorAll('.emoji-picker .emoji').forEach(emoji => {
+            emoji.addEventListener('click', function() {
+                insertAtCursor(messageInput, this.textContent);
+                messageInput.focus();
+                emojiPicker.style.display = 'none';
+            });
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!emojiPicker.contains(e.target) && e.target !== emojiBtn) {
+                emojiPicker.style.display = 'none';
+            }
+        });
+
+        function insertAtCursor(input, text) {
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const value = input.value;
+            input.value = value.substring(0, start) + text + value.substring(end);
+            input.selectionStart = input.selectionEnd = start + text.length;
+        }
+
+        // Fonction pour activer/désactiver les champs de saisie
+        function toggleMessageInput(enable) {
+            const input = document.querySelector('.message-input input');
+            const sendBtn = document.querySelector('.send-btn');
+            input.disabled = !enable;
+            sendBtn.disabled = !enable;
+            if (enable) {
+                input.focus();
+            }
+        }
+
+        // Fonction pour charger les messages d'une conversation
+        function loadMessages(userId) {
+            console.log('Loading messages for user:', userId);
+            fetch(`/api/messages/${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Received messages:', data);
+                    if (data.success) {
+                        const messages = document.querySelector('.messages');
+                        messages.innerHTML = '';
+                        data.messages.forEach(message => {
+                            const messageElement = createMessageElement(message);
+                            messages.appendChild(messageElement);
+                        });
+                        messages.scrollTop = messages.scrollHeight;
+                    } else {
+                        console.error('Error loading messages:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching messages:', error);
+                });
+        }
+
+        // Fonction pour créer un élément de message
+        function createMessageElement(message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${message.sender_id === currentUserId ? 'sent' : 'received'}`;
+            messageDiv.setAttribute('data-message-id', message.id);
+            
+            const messageBubble = document.createElement('div');
+            messageBubble.className = 'message-bubble';
+            messageBubble.textContent = message.content;
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = message.created_at;
+            
+            messageDiv.appendChild(messageBubble);
+            messageDiv.appendChild(timeDiv);
+            
+            // Ajouter le bouton de suppression pour les messages envoyés
+            if (message.sender_id === currentUserId) {
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'delete-message';
+                deleteButton.title = 'Supprimer le message';
+                deleteButton.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="5" y="7" width="14" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="M10 11v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 11v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M3 7h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2"/></svg>`;
+                deleteButton.onclick = function(e) {
+                    e.stopPropagation();
+                    if (confirm('Voulez-vous vraiment supprimer ce message pour le destinataire ?')) {
+                        deleteMessage(message.id);
+                    }
+                };
+                messageDiv.appendChild(deleteButton);
+            }
+            
+            return messageDiv;
+        }
+
+        // Fonction pour envoyer un message
+        function sendMessage() {
+            if (!currentChatPartner) {
+                console.error('No chat partner selected');
+                return;
+            }
+
+            const input = document.querySelector('.message-input input');
+            const message = input.value.trim();
+            
+            if (message) {
+                console.log('Sending message to user:', currentChatPartner);
+                fetch('/api/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        receiver_id: currentChatPartner,
+                        content: message
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Send message response:', data);
+                    if (data.success) {
+                        const messages = document.querySelector('.messages');
+                        const messageElement = createMessageElement(data.message);
+                        messages.appendChild(messageElement);
+                        messages.scrollTop = messages.scrollHeight;
+                        input.value = '';
+                        input.focus();
+                    } else {
+                        console.error('Error sending message:', data.message);
+                        alert('Error sending message: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending message:', error);
+                    alert('Error sending message. Please try again.');
+                });
+            }
+        }
+
+        // Gestionnaire d'événements pour l'envoi de message
+        document.querySelector('.send-btn').addEventListener('click', sendMessage);
+        document.querySelector('.message-input input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Gestionnaire d'événements pour le changement de contact
+        document.querySelectorAll('.contact').forEach(contact => {
+            contact.addEventListener('click', function() {
+                const userId = this.dataset.userId;
+                if (userId) {
+                    console.log('Selected chat partner:', userId);
+                    document.querySelectorAll('.contact').forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    currentChatPartner = userId;
+                    loadMessages(userId);
+                    
+                    // Mettre à jour l'en-tête du chat
+                    const name = this.querySelector('.contact-name').textContent;
+                    const avatar = this.querySelector('.contact-avatar').textContent;
+                    
+                    document.querySelector('.chat-header .contact-avatar').textContent = avatar;
+                    document.querySelector('.chat-header .contact-name').textContent = name;
+                    
+                    // Activer l'input et le bouton d'envoi
+                    toggleMessageInput(true);
+                }
+            });
+        });
+
+        // Initialiser le polling des messages
+        setInterval(() => {
+            if (currentChatPartner) {
+                loadMessages(currentChatPartner);
+            }
+        }, 5000);
+
+        // Désactiver les champs de saisie au chargement initial
+        toggleMessageInput(false);
+
+        function deleteMessage(messageId) {
+            fetch(`/api/messages/${messageId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Supprimer le message de l'interface
+                    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+                    if (messageElement) {
+                        messageElement.remove();
+                    }
+                } else {
+                    alert('Erreur lors de la suppression du message: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erreur lors de la suppression du message');
+            });
+        }
+    </script>
+</body>
+</html>

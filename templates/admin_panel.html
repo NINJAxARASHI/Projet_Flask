@@ -324,10 +324,97 @@
             transform: translateY(0);
         }
         .notification.success {
-            background: linear-gradient(90deg, #36d1dc, #0a5fb4);
+            background: linear-gradient(90deg, #36dc47, #3ab40a);
         }
         .notification.error {
             background: linear-gradient(90deg, #dc3545, #b40a0a);
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-reset-password,
+        .btn-manage-groups {
+            background-color: #0a5fb4;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-reset-password:hover,
+        .btn-manage-groups:hover {
+            background-color: #094d8f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .group-input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-add-group {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .btn-add-group:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .current-groups {
+            margin-top: 20px;
+        }
+
+        .current-groups h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        #userGroupsList {
+            list-style: none;
+            padding: 0;
+        }
+
+        #userGroupsList li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 5px;
+        }
+
+        .btn-remove-group {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+        }
+
+        .btn-remove-group:hover {
+            background-color: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
     </style>
 </head>
@@ -415,7 +502,11 @@
                         {% endif %}
                     </div>
                 </div>
-                <button class="btn-delete" data-user-id="{{ user.id }}">Delete</button>
+                <div class="user-actions">
+                    <button class="btn-reset-password" data-user-id="{{ user.id }}">Reset Password</button>
+                    <button class="btn-manage-groups" data-user-id="{{ user.id }}">Manage Groups</button>
+                    <button class="btn-delete" data-user-id="{{ user.id }}">Delete</button>
+                </div>
             </li>
             {% endfor %}
         </ul>
@@ -449,6 +540,55 @@
                     <button type="submit" class="btn-submit">Add</button>
                 </div>
             </form>
+        </div>
+    </div>
+    
+    <!-- Modal Reset Password -->
+    <div id="resetPasswordModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">Reset User Password</h3>
+            <form id="resetPasswordForm">
+                <input type="hidden" id="resetPasswordUserId">
+                <div class="form-group">
+                    <label class="form-label" for="new_password">New Password</label>
+                    <input type="password" id="new_password" name="new_password" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="confirm_new_password">Confirm New Password</label>
+                    <input type="password" id="confirm_new_password" name="confirm_new_password" class="form-input" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="hideResetPasswordModal()">Cancel</button>
+                    <button type="submit" class="btn-submit">Reset Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Manage Groups -->
+    <div id="manageGroupsModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">Manage User Groups</h3>
+            <input type="hidden" id="manageGroupsUserId">
+            <div class="form-group">
+                <label class="form-label" for="group_name">Group Name</label>
+                <div class="group-input-container">
+                    <input type="text" id="group_name" class="form-input" list="existing_groups">
+                    <datalist id="existing_groups">
+                        <!-- Will be populated dynamically -->
+                    </datalist>
+                    <button type="button" class="btn-add-group" onclick="createNewGroup()">Create New</button>
+                </div>
+            </div>
+            <div class="current-groups">
+                <h4>Current Groups</h4>
+                <ul id="userGroupsList">
+                    <!-- Will be populated dynamically -->
+                </ul>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="btn-cancel" onclick="hideManageGroupsModal()">Close</button>
+            </div>
         </div>
     </div>
     
@@ -551,6 +691,188 @@
             btn.addEventListener('click', function() {
                 const userId = this.getAttribute('data-user-id');
                 deleteUser(userId);
+            });
+        });
+
+        // Reset Password Modal
+        function showResetPasswordModal(userId) {
+            document.getElementById('resetPasswordUserId').value = userId;
+            document.getElementById('resetPasswordModal').style.display = 'flex';
+        }
+
+        function hideResetPasswordModal() {
+            document.getElementById('resetPasswordModal').style.display = 'none';
+            document.getElementById('resetPasswordForm').reset();
+        }
+
+        document.getElementById('resetPasswordForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const userId = document.getElementById('resetPasswordUserId').value;
+            const newPassword = document.getElementById('new_password').value;
+            const confirmPassword = document.getElementById('confirm_new_password').value;
+            
+            if (newPassword !== confirmPassword) {
+                showNotification('Passwords do not match', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/admin/users/${userId}/reset-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ new_password: newPassword })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Password reset successfully', 'success');
+                    hideResetPasswordModal();
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('An error occurred', 'error');
+            }
+        });
+
+        // Manage Groups Modal
+        function showManageGroupsModal(userId) {
+            document.getElementById('manageGroupsUserId').value = userId;
+            document.getElementById('manageGroupsModal').style.display = 'flex';
+            loadGroups(userId);
+        }
+
+        function hideManageGroupsModal() {
+            document.getElementById('manageGroupsModal').style.display = 'none';
+        }
+
+        async function loadGroups(userId) {
+            try {
+                // Load all groups
+                const groupsResponse = await fetch('/admin/groups');
+                const groupsData = await groupsResponse.json();
+                
+                if (groupsData.success) {
+                    const datalist = document.getElementById('existing_groups');
+                    datalist.innerHTML = '';
+                    groupsData.groups.forEach(group => {
+                        const option = document.createElement('option');
+                        option.value = group.name;
+                        datalist.appendChild(option);
+                    });
+                }
+
+                // Load user's current groups
+                const userGroupsResponse = await fetch(`/admin/groups?user_id=${userId}`);
+                const userGroupsData = await userGroupsResponse.json();
+                
+                if (userGroupsData.success) {
+                    const groupsList = document.getElementById('userGroupsList');
+                    groupsList.innerHTML = '';
+                    userGroupsData.groups.forEach(group => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            ${group.name}
+                            <button onclick="removeUserFromGroup(${userId}, ${group.id})" class="btn-remove-group">Remove</button>
+                        `;
+                        groupsList.appendChild(li);
+                    });
+                }
+            } catch (error) {
+                showNotification('Error loading groups', 'error');
+            }
+        }
+
+        async function createNewGroup() {
+            const groupName = document.getElementById('group_name').value;
+            if (!groupName) {
+                showNotification('Group name is required', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/admin/groups', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: groupName })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Group created successfully', 'success');
+                    const userId = document.getElementById('manageGroupsUserId').value;
+                    await addUserToGroup(userId, data.group.id);
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Error creating group', 'error');
+            }
+        }
+
+        async function addUserToGroup(userId, groupId) {
+            try {
+                const response = await fetch(`/admin/groups/${groupId}/users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ user_id: userId })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('User added to group successfully', 'success');
+                    loadGroups(userId);
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Error adding user to group', 'error');
+            }
+        }
+
+        async function removeUserFromGroup(userId, groupId) {
+            try {
+                const response = await fetch(`/admin/groups/${groupId}/users`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ user_id: userId })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('User removed from group successfully', 'success');
+                    loadGroups(userId);
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Error removing user from group', 'error');
+            }
+        }
+
+        // Add event listeners for the new buttons
+        document.querySelectorAll('.btn-reset-password').forEach(button => {
+            button.addEventListener('click', function() {
+                showResetPasswordModal(this.dataset.userId);
+            });
+        });
+
+        document.querySelectorAll('.btn-manage-groups').forEach(button => {
+            button.addEventListener('click', function() {
+                showManageGroupsModal(this.dataset.userId);
             });
         });
     </script>
