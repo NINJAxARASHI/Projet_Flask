@@ -1,0 +1,252 @@
+/* Style Global */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    height: 100vh;
+}
+
+/* Conteneur principal */
+.container {
+    display: flex;
+    width: 100%;
+}
+
+/* Partie Gauche (Bleue) */
+.left-panel {
+    width: 50%;
+    background: linear-gradient(to right, #5de, #004aad);
+    color: white;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    position: relative;
+}
+
+/* Triangle en haut à gauche */
+.left-panel::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 10px;
+    height: 0;
+    border-left: 60px solid #0096c7; /* Triangle plus large */
+    border-top: 50px solid transparent;
+    border-bottom: 50px solid transparent; /* Ajout pour un meilleur équilibre */
+}
+
+/* Position de "L-CLOUD" en haut à droite */
+.logo-title {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 34px;
+    font-weight: bold;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Illustration */
+.illustration {
+    width: 80%;
+    max-width: 400px;
+}
+
+/* Slogan */
+.slogan {
+    font-size: 21px;
+    color: white;
+    margin-top: 40px;
+}
+
+/* Partie Droite (Blanche) */
+.right-panel {
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+/* Login Box */
+.login-box {
+    width: 320px;
+    text-align: center;
+}
+
+/* Ajustement du logo */
+.logo {
+    width: 100px; /* Augmentation de la taille */
+    margin-bottom: 0px;
+    margin-top: -20px; /* Remonté vers le haut */
+    transition: transform 0.5s;
+}
+
+.logo:hover {
+    transform: scale(1.05);
+}
+
+/* Texte "WELCOME AGAIN!" centré et stylisé */
+.welcome {
+    font-size: 26px;
+    font-family: 'Tabarra Sans', sans-serif;
+    font-weight: bold;
+    margin-top: -10px; /* Remonté vers le haut */
+}
+
+/* Texte "Please enter your details" centré, en italique */
+.details {
+    font-size: 14px;
+    font-family: 'Tabarra Sans', sans-serif;
+    color: #777;
+    margin-top: 5px;
+    margin-bottom: 20px;
+    font-style: italic; /* Texte en italique */
+}
+
+/* Conteneur des champs de saisie */
+.input-container {
+    position: relative;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+/* Style des champs */
+.input-container input {
+    width: 100%;
+    padding: 15px 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    outline: none;
+    background: transparent;
+}
+
+.input-container input:focus {
+    border-color: #00c853;
+    box-shadow: 0 0 5px rgba(0, 200, 83, 0.3);
+}
+
+/* Labels à l'intérieur des champs */
+.input-container label {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #777;
+    transition: all 0.3s ease;
+}
+
+/* Animation du label */
+.input-container input:focus + label,
+.input-container input:not(:placeholder-shown) + label {
+    top: 5px;
+    font-size: 12px;
+    color: black;
+}
+
+/* Positionnement correct de l'œil */
+.password-container {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+.toggle-password:hover {
+    opacity: 0.7;
+}
+
+/* Alignement parfait du texte */
+.options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* Ajustement du checkbox et du texte */
+.options .remember {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Lien "Forgot Password?" */
+.options .forgot {
+    text-decoration: none;
+    color: blue;
+}
+
+/* Style du bouton */
+button {
+    background: #00c853;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 50px;
+    cursor: pointer;
+    margin-top: 20px;
+    font-size: 16px;
+    width: 100%;
+    transition: transform 0.2s, background 0.3s;
+}
+
+button:hover {
+    background: #00a046;
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+/* Style pour les messages */
+.error-message {
+    color: #f44336;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.success-message {
+    color: #4CAF50;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.info-message {
+    color: #2196F3;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+/* Lien d'inscription */
+.register-link {
+    margin-top: 15px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.register-link a {
+    color: blue;
+    text-decoration: none;
+}
+
+.register-link a:hover {
+    text-decoration: underline;
+}
+
+
+

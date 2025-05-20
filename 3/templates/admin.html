@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel{% endblock %}
+
+{% block styles %}
+    <link href="{{ url_for('static', filename='css/admin.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="header">
+            <a href="{{ url_for('logout') }}" class="logout-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M17 16L21 12M21 12L17 8M21 12H7M7 21H5C3.89543 21 3 20.1046 3 19V5C3 3.89543 3.89543 3 5 3H7" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Logout
+            </a>
+            <div class="header-right">
+                <a href="" class="report">REPORT</a>
+                <a href="" class="contact-btn">Contact us</a>
+                <div class="profile-icon">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Profile Icon">
+                </div>
+            </div>
+        </div>
+        <h1>CHOOSE YOUR MODE</h1>
+        <div class="mode-selection">
+            <a href="{{ url_for('browse') }}" class="mode-card">
+                <h2>Browse</h2>
+                <div class="icon-container">
+                    <img src="{{ url_for('static', filename='images/browse.png') }}" alt="Browse Icon">
+                </div>
+            </a>
+            <a href=" " class="mode-card">
+                <h2>Upload</h2>
+                <div class="icon-container">
+                    <img src="{{ url_for('static', filename='images/upload.png') }}" alt="Upload Icon">
+                </div>
+            </a>
+            <a href="{{ url_for('administration') }}" class="mode-card">
+                <h2>Admin</h2>
+                <div class="icon-container">
+                    <img src="{{ url_for('static', filename='images/admin.png') }}" alt="Admin Icon">
+                </div>
+            </a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}
+

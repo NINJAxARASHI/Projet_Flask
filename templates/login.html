@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L-Cloud Login</title>
+    <style>
+        /* Style Global */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Conteneur principal */
+        .container {
+            display: flex;
+            width: 100%;
+        }
+
+        /* Partie Gauche (Bleue) */
+        .left-panel {
+            width: 50%;
+            background: linear-gradient(to right, #5de, #004aad);
+            color: white;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Triangle en haut à gauche */
+        .left-panel::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 10px;
+            height: 0;
+            border-left: 60px solid #0096c7;
+            border-top: 50px solid transparent;
+            border-bottom: 50px solid transparent;
+        }
+
+        /* Position de "L-CLOUD" en haut à droite */
+        .logo-title {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 34px;
+            font-weight: bold;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Illustration */
+        .illustration {
+            width: 80%;
+            max-width: 400px;
+        }
+
+        /* Slogan */
+        .slogan {
+            font-size: 21px;
+            color: white;
+            margin-top: 40px;
+        }
+
+        /* Partie Droite (Blanche) */
+        .right-panel {
+            width: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Login Box */
+        .login-box {
+            width: 320px;
+            text-align: center;
+        }
+
+        /* Ajustement du logo */
+        .logo {
+            width: 100px;
+            margin-bottom: 0px;
+            margin-top: -20px;
+        }
+
+        /* Texte "WELCOME AGAIN!" centré et stylisé */
+        .welcome {
+            font-size: 26px;
+            font-family: 'Tabarra Sans', sans-serif;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+
+        /* Texte "Please enter your details" centré, en italique */
+        .details {
+            font-size: 14px;
+            font-family: 'Tabarra Sans', sans-serif;
+            color: #777;
+            margin-top: 5px;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        /* Conteneur des champs de saisie */
+        .input-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        /* Style des champs */
+        .input-container input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 25px;
+            font-size: 17px;
+            outline: none;
+            background: transparent;
+            height: 45px;
+            box-sizing: border-box;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+
+        /* Style spécifique pour le champ password */
+        .password-container input {
+            padding-right: 35px;
+            font-size: 18px;  /* Taille plus grande pour les points */
+            letter-spacing: 2px;  /* Espacement plus grand entre les points */
+        }
+
+        /* Style au focus */
+        .input-container input:focus {
+            border-color: #00c853;
+            box-shadow: 0 0 0 2px rgba(0, 200, 83, 0.1);
+        }
+
+        /* Labels à l'intérieur des champs */
+        .input-container label {
+            position: absolute;
+            top: 50%;
+            left: 30px;
+            transform: translateY(-50%);
+            font-size: 15px;
+            color: #777;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            background: white;
+            padding: 0 5px;
+        }
+
+        /* Animation du label */
+        .input-container input:focus + label,
+        .input-container input:not(:placeholder-shown) + label {
+            top: 0;
+            font-size: 12px;
+            color: #00c853;
+            background: white;
+            transform: translateY(-50%);
+        }
+
+        /* Positionnement correct de l'œil */
+        .password-container {
+            position: relative;
+        }
+
+        /* Ajustement de l'œil du mot de passe */
+        .toggle-password {
+            position: absolute;
+            right: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 16px;
+            opacity: 0.6;
+            transition: opacity 0.5s ease;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        .toggle-password:hover {
+            opacity: 0.9;
+        }
+
+        /* Alignement parfait du texte */
+        .options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        /* Ajustement du checkbox et du texte */
+        .options .remember {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Lien "Forgot Password?" */
+        .options .forgot {
+            text-decoration: none;
+            color: blue;
+        }
+
+        /* Style du bouton */
+        button {
+            background: #00c853;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Application des animations */
+        .logo {
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        .welcome {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .details {
+            animation: fadeIn 0.7s ease-out;
+        }
+
+        .input-container {
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .options {
+            animation: fadeIn 0.9s ease-out;
+        }
+
+        button {
+            animation: fadeIn 1s ease-out;
+            transition: transform 0.2s ease, background 0.3s ease;
+        }
+
+        button:hover {
+            transform: scale(1.02);
+            background: #00b548;
+        }
+
+        /* Animation des inputs */
+        .input-container input {
+            transition: border-color 0.3s ease;
+        }
+
+        .input-container input:focus {
+            border-color: #00c853;
+        }
+
+        /* Animation du label */
+        .input-container label {
+            transition: all 0.3s ease;
+            padding: 0 5px;
+            background-color: transparent;
+        }
+
+        .input-container input:focus + label {
+            color: #00c853;
+            font-weight: 500;
+        }
+
+        /* Animation du logo et de l'illustration */
+        .illustration {
+            transition: transform 0.3s ease;
+        }
+
+        .illustration:hover {
+            transform: scale(1.02);
+        }
+
+        .logo-title {
+            transition: transform 0.3s ease;
+        }
+
+        .logo-title:hover {
+            transform: scale(1.05);
+        }
+
+        /* Styles des messages d'alerte */
+        .alert {
+            margin-top: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background-color: #e3f2fd;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Partie Gauche -->
+        <div class="left-panel">
+            <h1 class="logo-title">L-CLOUD</h1>
+            <img src="{{ url_for('static', filename='images/fond.png') }}" alt="Illustration" class="illustration">
+            <p class="slogan">Your data is your data.</p>
+        </div>
+
+        <!-- Partie Droite -->
+        <div class="right-panel">
+            <div class="login-box">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+                <h2 class="welcome">WELCOME AGAIN!</h2>
+                <p class="details">Please enter your details</p>
+                
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="input-container">
+                        <input type="email" id="email" name="email" placeholder=" " required>
+                        <label for="email">Email</label>
+                    </div>
+
+                    <div class="input-container password-container">
+                        <input type="password" id="password" name="password" placeholder=" " required>
+                        <label for="password">Password</label>
+                        <span class="toggle-password" role="button" tabindex="0">👁️</span>
+                    </div>
+
+                    <div class="options">
+                        <label class="remember">
+                            <input type="checkbox" id="remember" name="remember">
+                            Remember for 30 days
+                        </label>
+                        <a href="{{ url_for('forgot_password') }}" class="forgot">Forgot Password?</a>
+                    </div>
+
+                    <button type="submit">Log In</button>
+                </form>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelector('.toggle-password').addEventListener('click', function() {
+            const passwordInput = document.querySelector('#password');
+            const eyeIcon = this;
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.style.opacity = '1';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.style.opacity = '0.7';
+            }
+        });
+
+        // Ajout de la possibilité d'utiliser la touche Entrée pour l'œil
+        document.querySelector('.toggle-password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                this.click();
+            }
+        });
+    </script>
+</body>
+</html>

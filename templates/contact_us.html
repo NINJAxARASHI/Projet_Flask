@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(to right, #36d1dc, #0a5fb4);
+            color: black;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            background-color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            width: fit-content;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            color: black;
+            border: none;
+            font-size: 18px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            background-color: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .back-button svg {
+            margin-right: 10px;
+        }
+        
+        .contact-title {
+            color: white;
+            font-size: 42px;
+            font-weight: bold;
+            margin: 15px 0 25px 0;
+        }
+        
+        .contact-container {
+            background-color: white;
+            border-radius: 25px;
+            padding: 25px;
+            max-width: 600px;
+            margin: 0 auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .form-label {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .form-input,
+        .form-textarea {
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #0a5fb4;
+            box-shadow: 0 0 0 3px rgba(10, 95, 180, 0.1);
+        }
+        
+        .form-textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        
+        .submit-button {
+            background-color: #0a5fb4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            align-self: flex-start;
+        }
+        
+        .submit-button:hover {
+            background-color: #094a8d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .submit-button:active {
+            transform: translateY(0);
+        }
+        
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        
+        .flash-message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .flash-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .flash-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .contact-info {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .contact-info h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .contact-info p {
+            color: #666;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('admin_dashboard' if current_user.is_admin else 'user_dashboard') }}" class="back-button">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="11" stroke="black" stroke-width="2"/>
+            <path d="M15 8L9 12L15 16" stroke="black" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Back
+    </a>
+    
+    <h1 class="contact-title">CONTACT US</h1>
+    
+    <div class="contact-container">
+        {% if get_flashed_messages() %}
+        <div class="flash-messages">
+            {% for category, message in get_flashed_messages(with_categories=true) %}
+            <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <form class="contact-form" method="POST" action="{{ url_for('contact_us') }}">
+            <div class="form-group">
+                <label for="subject" class="form-label">Subject</label>
+                <input type="text" id="subject" name="subject" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="message" class="form-label">Message</label>
+                <textarea id="message" name="message" class="form-textarea" required></textarea>
+            </div>
+            
+            <button type="submit" class="submit-button">Send Message</button>
+        </form>
+        
+        <div class="contact-info">
+            <h3>Need Help?</h3>
+            <p>Our support team is here to help you with any questions or issues you may have. We typically respond within 24 hours.</p>
+            <p style="margin-top: 10px;">Email: support@l-cloud.com</p>
+        </div>
+    </div>
+</body>
+</html>

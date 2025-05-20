@@ -1,0 +1,479 @@
+/* Styles spécifiques pour la page Upload */
+
+/* Information sur le stockage */
+.storage-info {
+    margin-bottom: 20px;
+    background-color: #f5f5f5;
+    padding: 10px 15px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.storage-text {
+    font-size: 14px;
+    color: #555;
+}
+
+.storage-warning {
+    color: #f44336;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+/* Fil d'Ariane (breadcrumb) */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    font-size: 14px;
+}
+
+.breadcrumb-item {
+    color: #666;
+    margin-right: 5px;
+}
+
+.breadcrumb-item:last-child {
+    color: black;
+    font-weight: bold;
+}
+
+.breadcrumb-separator {
+    margin: 0 5px;
+    color: #999;
+}
+
+/* Zone de dépôt de fichiers */
+.upload-zone {
+    margin-bottom: 40px;
+}
+
+.file-drop-area {
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.file-drop-area.highlight {
+    border-color: #2196F3;
+    background-color: rgba(33, 150, 243, 0.05);
+}
+
+.file-icon-large {
+    width: 60px;
+    height: 80px;
+    background-color: #0a5dba;
+    position: relative;
+    margin: 0 auto 15px;
+    border-radius: 5px;
+}
+
+.file-icon-large::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 15px;
+    height: 15px;
+    background-color: white;
+    clip-path: polygon(100% 0, 0 0, 100% 100%);
+}
+
+.file-icon-large::after {
+    content: "";
+    position: absolute;
+    top: 30%;
+    left: 20%;
+    right: 20%;
+    height: 40%;
+    background-image: linear-gradient(
+        to bottom,
+        white 20%,
+        transparent 20%,
+        transparent 40%,
+        white 40%,
+        white 60%,
+        transparent 60%
+    );
+}
+
+.select-button {
+    background-color: #0a5dba;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 15px;
+    transition: background-color 0.3s;
+}
+
+.select-button:hover {
+    background-color: #0950a0;
+}
+
+.select-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+/* Bouton d'upload */
+.upload-controls {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.upload-button {
+    background-color: #00c853;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.upload-button:hover {
+    background-color: #00a844;
+    transform: translateY(-2px);
+}
+
+.upload-button:active {
+    transform: translateY(0);
+}
+
+.upload-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.upload-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    position: relative;
+}
+
+.upload-icon::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: white;
+}
+
+.upload-icon::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 2px;
+    height: 100%;
+    background-color: white;
+}
+
+/* Liste des fichiers sélectionnés */
+.file-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.file-item-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f5f5f5;
+    border-radius: 5px;
+    padding: 15px;
+    width: 120px;
+}
+
+.file-icon-small {
+    width: 40px;
+    height: 50px;
+    background-color: #0a5dba;
+    position: relative;
+    margin-bottom: 10px;
+    border-radius: 3px;
+}
+
+.file-icon-small::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    background-color: white;
+    clip-path: polygon(100% 0, 0 0, 100% 100%);
+}
+
+.file-icon-small::after {
+    content: "";
+    position: absolute;
+    top: 30%;
+    left: 20%;
+    right: 20%;
+    height: 40%;
+    background-image: linear-gradient(
+        to bottom,
+        white 20%,
+        transparent 20%,
+        transparent 40%,
+        white 40%,
+        white 60%,
+        transparent 60%
+    );
+}
+
+.file-size {
+    font-size: 12px;
+    color: #777;
+    margin-top: 5px;
+}
+
+/* Section des fichiers déjà uploadés */
+.uploaded-files {
+    margin-top: 40px;
+}
+
+.uploaded-files h3 {
+    margin-bottom: 20px;
+    font-size: 20px;
+    color: #333;
+}
+
+/* Container de fichiers */
+.files-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+/* Item de fichier */
+.file-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    text-decoration: none;
+    color: black;
+    padding: 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.file-item:hover {
+    background-color: #f5f5f5;
+}
+
+.file-icon {
+    width: 40px;
+    height: 50px;
+    background-color: #0a5dba;
+    margin-bottom: 10px;
+    position: relative;
+    border-radius: 3px;
+}
+
+.file-icon::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    background-color: white;
+    clip-path: polygon(100% 0, 0 0, 100% 100%);
+}
+
+.file-icon::after {
+    content: "";
+    position: absolute;
+    top: 30%;
+    left: 20%;
+    right: 20%;
+    height: 40%;
+    background-image: linear-gradient(
+        to bottom,
+        white 20%,
+        transparent 20%,
+        transparent 40%,
+        white 40%,
+        white 60%,
+        transparent 60%
+    );
+}
+
+.file-name {
+    font-weight: bold;
+    font-size: 14px;
+    word-break: break-word;
+    max-width: 100%;
+}
+
+/* Wrapper de fichier */
+.file-wrapper {
+    position: relative;
+}
+
+.file-wrapper:hover .file-actions {
+    opacity: 1;
+}
+
+/* Actions sur les fichiers */
+.file-actions {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    display: flex;
+    gap: 5px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.delete-btn, .action-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.delete-btn {
+    background-color: #ff3d00;
+    color: white;
+}
+
+.delete-btn:hover {
+    background-color: #dd2c00;
+}
+
+.action-btn {
+    background-color: #f5f5f5;
+    color: #555;
+}
+
+.action-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.star-btn.starred {
+    background-color: #ffc107;
+    color: #fff;
+}
+
+/* Types d'icônes de fichiers */
+.image-icon {
+    background-color: #4caf50;
+}
+
+.word-icon {
+    background-color: #2196f3;
+}
+
+.excel-icon {
+    background-color: #4caf50;
+}
+
+.powerpoint-icon {
+    background-color: #ff5722;
+}
+
+.pdf-icon {
+    background-color: #f44336;
+}
+
+.audio-icon {
+    background-color: #9c27b0;
+}
+
+.video-icon {
+    background-color: #e91e63;
+}
+
+.archive-icon {
+    background-color: #795548;
+}
+
+/* Message vide */
+.empty-message {
+    text-align: center;
+    padding: 30px;
+    color: #666;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    border: 1px dashed #ddd;
+}
+
+/* Créer un dossier */
+.create-folder {
+    margin-top: 15px;
+}
+
+.create-folder-btn {
+    display: block;
+    padding: 10px 15px;
+    background-color: #f0f0f0;
+    border-radius: 25px;
+    text-align: center;
+    color: #333;
+    text-decoration: none;
+    font-weight: normal;
+    transition: background-color 0.3s;
+}
+
+.create-folder-btn:hover {
+    background-color: #e0e0e0;
+}
+
+/* Dossier actif */
+.folder-item.active {
+    background-color: #e3f2fd;
+    font-weight: bold;
+}
+
+/* Adaptations mobiles */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+    
+    .left-section, .right-section {
+        width: 100%;
+    }
+    
+    .right-section {
+        margin-top: 20px;
+    }
+    
+    .files-container {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+    
+    .file-list {
+        justify-content: center;
+    }
+}

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --success-color: #4cc9f0;
+            --danger-color: #f72585;
+            --warning-color: #f8961e;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --border-radius: 0.5rem;
+        }
+        
+        body {
+            background-color: #f5f7fb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .navbar .nav-link {
+            font-weight: 500;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .navbar .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+        }
+        
+        .navbar .active {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius);
+        }
+        
+        .container {
+            max-width: 1400px;
+        }
+        
+        .page-header {
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .page-title {
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+        
+        .card {
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+            padding: 1.25rem 1.5rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .btn {
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #3bacbe;
+            border-color: #3bacbe;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+        
+        .btn-danger:hover {
+            background-color: #d91b6b;
+            border-color: #d91b6b;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .quota-container {
+            margin-bottom: 1.5rem;
+        }
+        
+        .quota-label {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-size: 0.9rem;
+        }
+        
+        .quota-progress {
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quota-text {
+            font-size: 0.85rem;
+            color: #6c757d;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .modal-content {
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+        }
+        
+        .modal-footer {
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            background-color: #f8f9fa;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+        }
+        
+        .form-control, .form-select {
+            border-radius: var(--border-radius);
+            padding: 0.625rem 1rem;
+            border: 1px solid #dee2e6;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .user-role {
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .role-admin {
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary-color);
+        }
+        
+        .role-user {
+            background-color: rgba(108, 117, 125, 0.1);
+            color: #6c757d;
+        }
+        
+        .alert {
+            border-radius: var(--border-radius);
+            border: none;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        .action-buttons .btn {
+            margin-left: 0.5rem;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-folder me-2"></i>File Manager
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                            <i class="fas fa-chart-line me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('administration') }}">
+                            <i class="fas fa-users-cog me-1"></i> Administration
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('browse') }}">
+                            <i class="fas fa-folder-open me-1"></i> Files
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <span class="nav-link">
+                            <i class="fas fa-user-circle me-1"></i> {{ session['username'] }}
+                        </span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <h1 class="page-title">User Administration</h1>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                <i class="fas fa-user-plus me-2"></i> New User
+            </button>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="alert alert-info alert-dismissible fade show animate-fade-in" role="alert">
+            {% for message in messages %}
+            <div><i class="fas fa-info-circle me-2"></i> {{ message }}</div>
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 animate-fade-in">
+            {% for user in users %}
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-user-circle fs-4 me-2 text-primary"></i>
+                            <h5 class="mb-0">{{ user.username }}</h5>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#editUserModal{{ user.id }}" title="Edit User">
+                                <i class="fas fa-edit text-primary"></i>
+                            </button>
+                            <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#deleteUserModal{{ user.id }}" title="Delete User">
+                                <i class="fas fa-trash text-danger"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <span class="user-role {{ 'role-admin' if user.is_admin else 'role-user' }}">
+                                <i class="fas {{ 'fa-user-shield' if user.is_admin else 'fa-user' }} me-1"></i>
+                                {{ "Administrator" if user.is_admin else "Standard User" }}
+                            </span>
+                        </div>
+
+                        <div class="quota-container">
+                            <div class="quota-label">
+                                <span><i class="fas fa-database me-2"></i>Storage</span>
+                            </div>
+                            <div class="progress quota-progress">
+                                <div class="progress-bar bg-{{ 'danger' if user.storage_percent > 90 else 'warning' if user.storage_percent > 70 else 'primary' }}" 
+                                    role="progressbar" style="width: {{ user.storage_percent }}%" 
+                                    aria-valuenow="{{ user.storage_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="quota-text">
+                                <span>{{ user.used_storage }}</span>
+                                <span>{{ user.storage_quota }}</span>
+                            </div>
+                        </div>
+
+                        <div class="quota-container">
+                            <div class="quota-label">
+                                <span><i class="fas fa-folder me-2"></i>Folders</span>
+                            </div>
+                            <div class="progress quota-progress">
+                                <div class="progress-bar bg-{{ 'danger' if user.folder_percent > 90 else 'warning' if user.folder_percent > 70 else 'primary' }}" 
+                                    role="progressbar" style="width: {{ user.folder_percent }}%" 
+                                    aria-valuenow="{{ user.folder_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="quota-text">
+                                <span>{{ user.folder_count }}</span>
+                                <span>{{ user.max_folders }}</span>
+                            </div>
+                        </div>
+
+                        <div class="quota-container">
+                            <div class="quota-label">
+                                <span><i class="fas fa-file me-2"></i>Files</span>
+                            </div>
+                            <div class="progress quota-progress">
+                                <div class="progress-bar bg-{{ 'danger' if user.file_percent > 90 else 'warning' if user.file_percent > 70 else 'primary' }}" 
+                                    role="progressbar" style="width: {{ user.file_percent }}%" 
+                                    aria-valuenow="{{ user.file_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="quota-text">
+                                <span>{{ user.file_count }}</span>
+                                <span>{{ user.max_files }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal de modification de l'utilisateur -->
+            <div class="modal fade" id="editUserModal{{ user.id }}" tabindex="-1" aria-labelledby="editUserModalLabel{{ user.id }}" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editUserModalLabel{{ user.id }}">
+                                <i class="fas fa-user-edit me-2"></i>Edit User: {{ user.username }}
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form action="{{ url_for('edit_user', user_id=user.id) }}" method="post">
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label for="username{{ user.id }}" class="form-label">Username</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" class="form-control" id="username{{ user.id }}" name="username" value="{{ user.username }}" readonly required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="password{{ user.id }}" class="form-label">Password (leave blank to keep unchanged)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input type="password" class="form-control" id="password{{ user.id }}" name="password">
+                                    </div>
+                                </div>
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="is_admin{{ user.id }}" name="is_admin" {{ 'checked' if user.is_admin else '' }}>
+                                    <label class="form-check-label" for="is_admin{{ user.id }}">Administrator</label>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="storage_quota{{ user.id }}" class="form-label">Storage (ex: 100MB, 1GB)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-database"></i></span>
+                                        <input type="text" class="form-control" id="storage_quota{{ user.id }}" name="storage_quota" value="{{ user.storage_quota }}">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="max_folders{{ user.id }}" class="form-label">Maximum Number of Folders</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-folder"></i></span>
+                                        <input type="number" class="form-control" id="max_folders{{ user.id }}" name="max_folders" value="{{ user.folders_total }}" min="1">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="max_files{{ user.id }}" class="form-label">Maximum Number of Files</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-file"></i></span>
+                                        <input type="number" class="form-control" id="max_files{{ user.id }}" name="max_files" value="{{ user.files_total }}" min="1">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal de suppression de l'utilisateur -->
+            <div class="modal fade" id="deleteUserModal{{ user.id }}" tabindex="-1" aria-labelledby="deleteUserModalLabel{{ user.id }}" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title" id="deleteUserModalLabel{{ user.id }}">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Confirm Deletion
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="text-center mb-4">
+                                <i class="fas fa-user-slash fa-4x text-danger mb-3"></i>
+                                <h4>Delete User: <strong>{{ user.username }}</strong></h4>
+                            </div>
+                            <div class="alert alert-danger">
+                                <p><i class="fas fa-exclamation-circle me-2"></i>This action will delete all folders and files of this user and cannot be undone.</p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </button>
+                            <form action="{{ url_for('delete_user', user_id=user.id) }}" method="post">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash-alt me-2"></i>Delete User
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Modal d'ajout d'utilisateur -->
+    <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addUserModalLabel">
+                        <i class="fas fa-user-plus me-2"></i>Add New User
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ url_for('add_user') }}" method="post">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="is_admin" name="is_admin">
+                            <label class="form-check-label" for="is_admin">Administrator</label>
+                        </div>
+                        <div class="mb-3">
+                            <label for="storage_quota" class="form-label">Storage (ex: 100MB, 1GB)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-database"></i></span>
+                                <input type="text" class="form-control" id="storage_quota" name="storage_quota" value="100MB">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="max_folders" class="form-label">Maximum Number of Folders</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-folder"></i></span>
+                                <input type="number" class="form-control" id="max_folders" name="max_folders" value="10" min="1" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="max_files" class="form-label">Maximum Number of Files</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-file"></i></span>
+                                <input type="number" class="form-control" id="max_files" name="max_files" value="50" min="1" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-user-plus me-2"></i>Add User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS avec Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

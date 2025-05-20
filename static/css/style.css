@@ -1,0 +1,276 @@
+:root {
+    --primary-color: #00A3FF;
+    --secondary-color: #0066CC;
+    --success-color: #00C853;
+    --danger-color: #FF3B30;
+    --background-gradient: linear-gradient(135deg, #00A3FF 0%, #0066CC 100%);
+    --text-color: #333333;
+    --light-text: #666666;
+    --border-color: #E5E5E5;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    color: var(--text-color);
+    background-color: #F5F7FA;
+    margin: 0;
+    padding: 0;
+}
+
+/* Navbar styles */
+.navbar {
+    background: var(--background-gradient);
+    padding: 1rem 2rem;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* Login page styles */
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--background-gradient);
+}
+
+.login-content {
+    display: flex;
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    width: 1000px;
+    box-shadow: var(--card-shadow);
+}
+
+.login-left {
+    flex: 1;
+    padding: 4rem;
+    background: var(--background-gradient);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-right {
+    flex: 1;
+    padding: 4rem;
+    background: white;
+}
+
+.login-form-container {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.shield-icon {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--light-text);
+}
+
+.password-input {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+/* Mode selection styles */
+.mode-selection-container {
+    padding: 4rem 2rem;
+}
+
+.mode-card {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.2s;
+}
+
+.mode-card:hover {
+    transform: translateY(-5px);
+}
+
+.mode-card .card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: var(--card-shadow);
+    padding: 2rem;
+    text-align: center;
+}
+
+.mode-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1rem;
+}
+
+.mode-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+/* Browse page styles */
+.browse-container {
+    height: calc(100vh - 72px);
+    display: flex;
+    flex-direction: column;
+}
+
+.browse-header {
+    padding: 1.5rem 2rem;
+    background: white;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.back-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: var(--light-text);
+}
+
+.browse-content {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.folders-sidebar {
+    width: 280px;
+    background: white;
+    border-right: 1px solid var(--border-color);
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+.folder-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-color);
+    transition: background-color 0.2s;
+}
+
+.folder-item:hover {
+    background-color: #F5F7FA;
+}
+
+.folder-item.active {
+    background-color: #E3F2FD;
+    color: var(--primary-color);
+}
+
+.files-display {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.files-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem;
+}
+
+.file-item {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.file-name {
+    text-align: center;
+    word-break: break-word;
+}
+
+.file-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.no-folder-selected {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--light-text);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .login-content {
+        flex-direction: column;
+        width: 100%;
+        border-radius: 0;
+    }
+
+    .login-left {
+        padding: 2rem;
+    }
+
+    .login-right {
+        padding: 2rem;
+    }
+
+    .browse-content {
+        flex-direction: column;
+    }
+
+    .folders-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+} 

@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="vscode-container">
+    <div class="vscode-header">
+        <div class="window-controls">
+            <span class="window-control close"></span>
+            <span class="window-control minimize"></span>
+            <span class="window-control maximize"></span>
+        </div>
+        <div class="tab-container">
+            <div class="tab active">
+                <span class="tab-icon" data-filetype="{{ filename.split('.')[-1] }}"></span>
+                <span class="tab-name">{{ filename }}</span>
+                <span class="tab-close">×</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="vscode-sidebar">
+    </div>
+
+    <div class="vscode-editor">
+        <div class="line-numbers">
+            {% for i in range(1, content.count('\n') + 2) %}
+            <div class="line-number">{{ i }}</div>
+            {% endfor %}
+        </div>
+        <div class="code-content">
+            <pre class="code-block"><code>{{ content }}</code></pre>
+        </div>
+    </div>
+
+
+
+    <div class="file-actions">
+        <a href="{{ url_for('browse') }}" class="btn btn-secondary">Back to files</a>
+        <a href="{{ url_for('download_file', file_id=file_id) }}" class="btn btn-primary">Download</a>
+    </div>
+</div>
+
+<style>
+    /* VSCode macOS Theme Styles */
+    :root {
+        --vscode-bg: #1e1e1e;
+        --vscode-sidebar-bg: #252526;
+        --vscode-header-bg: #333333;
+        --vscode-text: #d4d4d4;
+        --vscode-line-number: #858585;
+        --vscode-border: #474747;
+        --vscode-active-tab: #1e1e1e;
+        --vscode-inactive-tab: #2d2d2d;
+        --vscode-footer-bg: #007acc;
+        --vscode-footer-text: #ffffff;
+        --font-mono: 'SF Mono', SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    }
+
+    body {
+        margin: 0;
+        padding: 20px;
+        background-color: #f5f5f5;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+
+    .vscode-container {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        background-color: var(--vscode-bg);
+        color: var(--vscode-text);
+        display: flex;
+        flex-direction: column;
+        height: 80vh;
+        min-height: 600px;
+    }
+
+    /* Header with window controls and tabs */
+    .vscode-header {
+        background-color: var(--vscode-header-bg);
+        display: flex;
+        padding: 8px 0 0;
+        border-bottom: 1px solid var(--vscode-border);
+        position: relative;
+    }
+
+    .window-controls {
+        display: flex;
+        align-items: center;
+        padding-left: 10px;
+        gap: 6px;
+    }
+
+    .window-control {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .window-control.close {
+        background-color: #ff5f56;
+    }
+
+    .window-control.minimize {
+        background-color: #ffbd2e;
+    }
+
+    .window-control.maximize {
+        background-color: #27c93f;
+    }
+
+    .tab-container {
+        display: flex;
+        margin-left: 16px;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .tab-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tab {
+        display: flex;
+        align-items: center;
+        padding: 8px 16px;
+        background-color: var(--vscode-inactive-tab);
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+        margin-right: 2px;
+        font-size: 13px;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .tab.active {
+        background-color: var(--vscode-active-tab);
+    }
+
+    .tab-icon {
+        width: 16px;
+        height: 16px;
+        margin-right: 6px;
+        background-size: 16px;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+
+    .tab-icon[data-filetype="html"] {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%23e44d26' d='M5.902 27.201L3.655 2h24.69l-2.25 25.197L15.985 30 5.902 27.201z'/%3E%3Cpath fill='%23f16529' d='M16 27.858l8.17-2.265 1.922-21.532H16v23.797z'/%3E%3Cpath fill='%23ebebeb' d='M16 13.407h-4.09l-.282-3.165H16V7.151H8.25l.074.83.759 8.517H16v-3.091zM16 21.434l-.014.004-3.442-.929-.22-2.465H9.221l.433 4.852 6.332 1.758.014-.004v-3.216z'/%3E%3Cpath fill='%23fff' d='M15.989 13.407v3.091h3.806l-.358 4.009-3.448.93v3.216l6.337-1.757.046-.522.726-8.137.076-.83H15.989zM15.989 7.151v3.091h7.466l.062-.694.141-1.567.074-.83h-7.743z'/%3E%3C/svg%3E");
+    }
+
+    .tab-icon[data-filetype="css"] {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%231572B6' d='M5.902 27.201L3.656 2h24.688l-2.249 25.197L15.985 30 5.902 27.201z'/%3E%3Cpath fill='%2333A9DC' d='M16 27.858l8.17-2.265 1.922-21.532H16v23.797z'/%3E%3Cpath fill='%23fff' d='M16 12.191h4.09l.282-3.165H16V6.935h7.75l-.074.829-.759 8.518H16v-4.091z'/%3E%3Cpath fill='%23EBEBEB' d='M16.019 19.672l-.014.004-3.442-.93-.22-2.465h-3.099l.433 4.853 6.331 1.758.015-.004v-3.216z'/%3E%3Cpath fill='%23fff' d='M19.827 16.151l-.379 4.009-3.445.93v3.216l6.335-1.757.046-.522.544-6.126.057-.644.739-8.3H16v3.091h6.835l-.283 3.103H16v3z'/%3E%3Cpath fill='%23EBEBEB' d='M16.011 6.935v2.091H8.546l-.065-.693-.148-1.567-.074-.831h7.752zM16 12.191v3.091h-3.399l-.064-.693-.148-1.567-.074-.831H16z'/%3E%3C/svg%3E");
+    }
+
+    .tab-icon[data-filetype="js"] {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%23F7DF1E' d='M2 2h28v28H2z'/%3E%3Cpath d='M20.809 23.875c.602 1.007 1.395 1.756 2.785 1.756 1.17 0 1.92-.599 1.92-1.433 0-.993-.769-1.346-2.041-1.922l-.702-.309c-2.011-.878-3.338-1.977-3.338-4.291 0-2.133 1.575-3.753 4.041-3.753 1.753 0 3.016.623 3.925 2.27l-2.163 1.425c-.475-.89-.986-1.236-1.762-1.236-.802 0-1.312.521-1.312 1.236 0 .86.52 1.211 1.719 1.743l.702.31c2.358 1.039 3.688 2.097 3.688 4.473 0 2.558-1.962 3.961-4.596 3.961-2.576 0-4.236-1.258-5.048-2.909l2.182-1.321zM11.56 24.113c.436.788.829 1.459 1.773 1.459.906 0 1.479-.363 1.479-1.772v-9.55h2.693v9.589c0 2.858-1.636 4.16-4.024 4.16-2.161 0-3.41-1.153-4.043-2.543l2.122-1.343z'/%3E%3C/svg%3E");
+    }
+
+    .tab-icon[data-filetype="py"] {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='-133.268' y1='-202.91' x2='-133.198' y2='-202.84' gradientTransform='matrix(189.38 0 0 189.81 25243.06 38519.17)' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='0' stop-color='%23387eb8'/%3E%3Cstop offset='1' stop-color='%23366994'/%3E%3C/linearGradient%3E%3ClinearGradient id='b' x1='-133.575' y1='-203.203' x2='-133.495' y2='-203.133' gradientTransform='matrix(189.38 0 0 189.81 25309.61 38583.42)' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='0' stop-color='%23ffe052'/%3E%3Cstop offset='1' stop-color='%23ffc331'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M15.885 2.1c-7.1 0-6.651 3.07-6.651 3.07v3.19h6.752v1H6.545S2 8.8 2 16.005s4.013 6.912 4.013 6.912H8.33v-3.361s-.13-4.013 3.9-4.013h6.762s3.772.06 3.772-3.652V5.8s.572-3.712-6.842-3.712zm-3.732 2.137a1.214 1.214 0 11-1.183 1.244v-.02a1.214 1.214 0 011.214-1.214z' fill='url(%23a)'/%3E%3Cpath d='M16.085 29.91c7.1 0 6.651-3.08 6.651-3.08v-3.18h-6.751v-1h9.47S30 23.158 30 15.995s-4.013-6.912-4.013-6.912H23.64V12.4s.13 4.013-3.9 4.013h-6.765S9.2 16.356 9.2 20.068V26.2s-.572 3.712 6.842 3.712h.04zm3.732-2.147A1.214 1.214 0 1121 26.519v.03a1.214 1.214 0 01-1.214 1.214h.03z' fill='url(%23b)'/%3E%3C/svg%3E");
+    }
+
+    .tab-icon[data-filetype="json"] {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M24.184 12.652c-.027-.328-.115-.6-.27-.842a1.763 1.763 0 00-.61-.587 1.827 1.827 0 00-.877-.212c-.32 0-.605.07-.855.212a1.763 1.763 0 00-.61.587c-.154.24-.243.514-.27.842a5.871 5.871 0 00-.027.61v.633c0 .187.01.373.027.56.027.327.116.6.27.842.155.24.356.433.61.57.25.14.535.211.856.211.32 0 .604-.7.854-.21.255-.138.456-.33.61-.57.154-.243.243-.516.27-.843.02-.187.027-.373.027-.56v-.633c0-.2-.006-.397-.027-.61zm-.984 1.207c0 .36-.03.628-.088.805-.058.177-.17.265-.334.265-.164 0-.276-.088-.334-.265-.06-.177-.088-.445-.088-.805v-.53c0-.351.029-.619.088-.8.058-.18.17-.271.334-.271.164 0 .276.09.334.27.06.182.088.45.088.801v.53zm-16.712 2.311c.32 0 .605-.7.855-.21.255-.138.456-.33.61-.57.154-.243.243-.516.27-.843.02-.187.027-.373.027-.56v-.633c0-.2-.006-.397-.027-.61-.027-.328-.115-.6-.27-.842a1.763 1.763 0 00-.61-.587 1.827 1.827 0 00-.877-.212c-.32 0-.605.07-.855.212a1.763 1.763 0 00-.61.587c-.154.24-.243.514-.27.842a5.871 5.871 0 00-.027.61v.633c0 .187.01.373.027.56.027.327.116.6.27.842.155.24.356.433.61.57.25.14.535.211.855.211zm-.685-2.806c0-.351.03-.619.088-.8.058-.18.17-.271.334-.271.164 0 .276.09.334.27.06.182.088.45.088.801v.53c0 .36-.03.628-.088.805-.058.177-.17.265-.334.265-.164 0-.276-.088-.334-.265-.06-.177-.088-.445-.088-.805v-.53zm9.547-5.214h-.938v.932h.938v-.932zm3.751 0h-.938v.932h.938v-.932zm-7.503 0h-.938v.932h.938v-.932zm-3.751 0h-.938v.932h.938v-.932zm7.503 0h-.938v.932h.938v-.932zm-3.752 3.73h-.938v.933h.938v-.932zm3.752 0h-.938v.933h.938v-.932zm-7.503 0h-.938v.933h.938v-.932zm-3.751 0h-.938v.933h.938v-.932zm11.254 0h-.938v.933h.938v-.932zm4.69-12.333H4.708c-1.554 0-2.817 1.27-2.817 2.825v22.453c0 1.556 1.263 2.825 2.817 2.825h22.584c1.554 0 2.817-1.27 2.817-2.825V2.373c0-1.556-1.263-2.825-2.817-2.825zm.22 25.117c0 .15-.123.272-.275.272H4.963a.274.274 0 01-.275-.272V2.634c0-.15.123-.272.275-.272h22.068c.152 0 .275.122.275.272v24.026z' fill='%23EDA200'/%3E%3C/svg%3E");
+    }
+
+    .tab-icon[data-filetype="pt"],
+    .tab-icon {
+        /* Default file icon */
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M20.75 2H8.25C7.01 2 6 3.01 6 4.25v23.5C6 28.99 7.01 30 8.25 30h15.5c1.24 0 2.25-1.01 2.25-2.25V8L20.75 2z' fill='%2399AAB5'/%3E%3Cpath d='M21 2v6h6l-6-6z' fill='%23E1E8ED'/%3E%3C/svg%3E");
+    }
+
+    .tab-name {
+        margin: 0 4px;
+    }
+
+    .tab-close {
+        margin-left: 8px;
+        opacity: 0.7;
+        font-size: 16px;
+    }
+
+    /* Main content layout */
+    .vscode-editor {
+        display: flex;
+        flex: 1;
+        overflow: auto;
+        position: relative;
+    }
+
+    .vscode-sidebar {
+        width: 200px;
+        background-color: var(--vscode-sidebar-bg);
+        border-right: 1px solid var(--vscode-border);
+        overflow-y: auto;
+        flex-shrink: 0;
+    }
+
+    .sidebar-content {
+        padding: 0 8px;
+    }
+
+    .folder {
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-size: 13px;
+    }
+
+    .folder-icon {
+        margin-right: 6px;
+        font-size: 10px;
+        color: #c5c5c5;
+    }
+
+    .folder-name {
+        color: #c5c5c5;
+    }
+
+    /* Code display */
+    .line-numbers {
+        padding: 12px 0;
+        text-align: right;
+        color: var(--vscode-line-number);
+        user-select: none;
+        font-family: var(--font-mono);
+        font-size: 13px;
+        min-width: 40px;
+        background-color: var(--vscode-bg);
+    }
+
+    .line-number {
+        padding: 0 10px;
+        display: block;
+        line-height: 1.5;
+    }
+
+    .code-content {
+        flex: 1;
+        padding: 12px 0;
+        overflow-x: auto;
+    }
+
+    .code-block {
+        margin: 0;
+        padding: 0 16px;
+        font-family: var(--font-mono);
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--vscode-text);
+        white-space: pre;
+    }
+
+
+
+    .footer-left,
+    .footer-center,
+    .footer-right {
+        display: flex;
+        gap: 16px;
+    }
+
+    /* File actions */
+    .file-actions {
+        padding: 15px;
+        display: flex;
+        gap: 10px;
+        background-color: #f5f5f5;
+        border-radius: 0 0 6px 6px;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-size: 14px;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+
+    .btn-secondary {
+        background-color: #e9e9e9;
+        color: #333;
+    }
+
+    .btn-secondary:hover {
+        background-color: #d4d4d4;
+    }
+
+    .btn-primary {
+        background-color: #0078d4;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #006abc;
+    }
+
+    /* Light Theme Option */
+    .light-theme {
+        --vscode-bg: #ffffff;
+        --vscode-sidebar-bg: #f3f3f3;
+        --vscode-header-bg: #f3f3f3;
+        --vscode-text: #333333;
+        --vscode-line-number: #a9a9a9;
+        --vscode-border: #e0e0e0;
+        --vscode-active-tab: #ffffff;
+        --vscode-inactive-tab: #f3f3f3;
+        --vscode-footer-bg: #007acc;
+    }
+
+    /* Theme toggle button */
+    .theme-toggle {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: transparent;
+        border: 1px solid #aaa;
+        color: #aaa;
+        border-radius: 4px;
+        padding: 4px 8px;
+        font-size: 12px;
+        cursor: pointer;
+        z-index: 10;
+    }
+
+    .theme-toggle:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Syntax highlighting */
+    .code-block .keyword {
+        color: #569cd6;
+    }
+
+    .code-block .string {
+        color: #ce9178;
+    }
+
+    .code-block .comment {
+        color: #6a9955;
+    }
+
+    .code-block .number {
+        color: #b5cea8;
+    }
+
+    .code-block .operator {
+        color: #d4d4d4;
+    }
+
+    .code-block .function {
+        color: #dcdcaa;
+    }
+
+    .code-block .tag {
+        color: #569cd6;
+    }
+
+    .code-block .attribute {
+        color: #9cdcfe;
+    }
+
+    .code-block .value {
+        color: #ce9178;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .vscode-container {
+            height: 90vh;
+        }
+
+        .vscode-sidebar {
+            display: none;
+        }
+
+        .file-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Add a theme toggle button
+        const themeToggle = document.createElement('button');
+        themeToggle.className = 'theme-toggle';
+        themeToggle.textContent = 'Toggle Theme';
+        document.querySelector('.vscode-container').appendChild(themeToggle);
+
+        // Toggle between dark and light theme
+        themeToggle.addEventListener('click', function () {
+            document.querySelector('.vscode-container').classList.toggle('light-theme');
+        });
+    });
+</script>
+{% endblock %}

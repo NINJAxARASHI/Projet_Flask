@@ -1,0 +1,489 @@
+/* Styles généraux */
+:root {
+    --primary-color: #4a6baf;
+    --secondary-color: #f0f2f5;
+    --border-color: #ddd;
+    --text-color: #333;
+    --hover-color: #eaeef7;
+    --active-color: #d8e1f3;
+    --folder-color: #4a6baf;
+    --file-color: #6c757d;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #36d1dc 0%, #0a5dba 100%);
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.container {
+    display: flex;
+    height: calc(100vh - 120px);
+    margin: 0 20px;
+}
+
+/* Style pour le titre et le bouton retour */
+.browse-title {
+    text-align: center;
+    margin: 20px 0;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.back-button {
+    display: flex;
+    align-items: center;
+    margin: 20px;
+    text-decoration: none;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.back-button svg {
+    margin-right: 8px;
+}
+
+/* Panneau de gauche avec arborescence */
+.left-panel {
+    width: 300px;
+    border-right: 1px solid var(--border-color);
+    padding: 15px;
+    overflow-y: auto;
+    background-color: var(--secondary-color);
+    border-radius: 11px;
+    background: linear-gradient(45deg, #cacaca, #f0f0f0);
+    box-shadow:  11px -11px 13px #7d7d7d,
+                -11px 11px 13px #ffffff;
+    background: rgba( 255, 255, 255, 1 );
+    box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
+    backdrop-filter: blur( 20px );
+    -webkit-backdrop-filter: blur( 20px );
+    border-radius: 10px;
+    border: 1px solid rgba( 255, 255, 255, 0.18 );
+}
+
+.folder-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.folder-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.folder-structure {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.folder-structure ul {
+    list-style: none;
+    padding-left: 20px;
+    margin: 0;
+    display: none;
+}
+
+.folder.expanded > ul {
+    display: block;
+}
+
+.folder {
+    margin: 4px 0;
+    position: relative;
+}
+
+.folder-link {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    text-decoration: none;
+    color: var(--text-color);
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.folder-link:hover {
+    background-color: var(--hover-color);
+}
+
+.folder-link.current {
+    background-color: var(--active-color);
+    font-weight: 500;
+}
+
+.folder-toggle {
+    margin-right: 8px;
+    display: inline-flex;
+    width: 12px;
+    height: 12px;
+    cursor: pointer;
+}
+
+.icon-collapsed {
+    display: inline;
+}
+
+.icon-expanded {
+    display: none;
+}
+
+.folder.expanded .icon-collapsed {
+    display: none;
+}
+
+.folder.expanded .icon-expanded {
+    display: inline;
+}
+
+/* Panneau de droite avec contenu */
+.right-panel {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    overflow-y: auto;
+}
+
+.path-navigation {
+    padding: 10px;
+    margin-bottom: 15px;
+    background-color: var(--secondary-color);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.path-navigation a {
+    text-decoration: none;
+    color: var(--primary-color);
+}
+
+.path-navigation a:hover {
+    text-decoration: underline;
+}
+
+.path-separator {
+    margin: 0 5px;
+    color: #888;
+}
+
+.current-folder {
+    font-weight: 500;
+}
+
+.actions-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+}
+
+.action-button {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.action-button svg {
+    margin-right: 8px;
+}
+
+.action-button:hover {
+    background-color: #3a59a0;
+}
+
+/* Liste des éléments */
+.content-area {
+    flex-grow: 1;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    border-radius: 11px;
+    background: linear-gradient(45deg, #6b8cb6, #7fa6d8);
+    box-shadow:  12px -12px 24px #6381a8,
+                -12px 12px 24px #8bb5ec;
+}
+
+.item-list {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.list-header {
+    display: table-row;
+    background-color: var(--secondary-color);
+    font-weight: 500;
+}
+
+.list-header > div {
+    display: table-cell;
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.list-item {
+    display: table-row;
+    transition: background-color 0.2s;
+}
+
+.list-item:hover {
+    background-color: var(--hover-color);
+}
+
+.list-item > div {
+    display: table-cell;
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+.item-name {
+    width: 40%;
+    display: flex;
+    align-items: center;
+}
+
+.item-name svg {
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.item-name a {
+    text-decoration: none;
+    color: var(--text-color);
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.folder-item .item-name a {
+    color: var(--folder-color);
+}
+
+.file-item .item-name a {
+    color: var(--file-color);
+}
+
+.item-name a:hover {
+    text-decoration: underline;
+}
+
+.item-owner, .item-date {
+    width: 20%;
+}
+
+.item-size {
+    width: 10%;
+    text-align: right;
+}
+
+.item-actions {
+    width: 10%;
+    text-align: right;
+}
+
+.icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-button:hover {
+    background-color: var(--secondary-color);
+}
+
+.empty-folder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #888;
+}
+
+.empty-folder svg {
+    margin-bottom: 10px;
+    stroke: #888;
+}
+
+/* Modales */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 8px;
+    width: 500px;
+    max-width: 90%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #888;
+}
+
+.close-modal:hover {
+    color: #333;
+}
+
+.modal-content form {
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.form-group input[type="text"],
+.form-group input[type="file"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.cancel-btn {
+    background-color: #f0f0f0;
+    color: #333;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.submit-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+.submit-btn:hover {
+    background-color: #3a59a0;
+}
+
+.action-button {
+    padding: 15px 30px;
+    border: 2px solid #2c2c2c;
+    background-color: #1a1a1a;
+    color: #ffffff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    border-radius: 30px;
+    transition: all 0.4s ease;
+    outline: none;
+    position: relative;
+    overflow: hidden;
+    font-weight: bold;
+  }
+  
+  .action-button::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.25) 0%,
+      rgba(255, 255, 255, 0) 70%
+    );
+    transform: scale(0);
+    transition: transform 0.5s ease;
+  }
+  
+  .action-button:hover::after {
+    transform: scale(4);
+  }
+  
+  .action-button:hover {
+    border-color: #666666;
+    background: #292929;
+  }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+        height: auto;
+    }
+    
+    .left-panel {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        max-height: 300px;
+    }
+}

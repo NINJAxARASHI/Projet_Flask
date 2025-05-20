@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L-Cloud - Create Folder</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/logo.png') }}" type="image/png">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(to right, #36d1dc, #0a5dba);
+        }
+        
+        .modal {
+            width: 100%;
+            max-width: 500px;
+            animation: fadeIn 0.5s, slideDown 0.5s;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .modal-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            margin: 0;
+            color: #333;
+        }
+        
+        .folder-path {
+            background-color: #f5f5f5;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: #0a5dba;
+            outline: none;
+            box-shadow: 0 0 5px rgba(10, 93, 186, 0.3);
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-cancel {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .btn-cancel:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .btn-create {
+            background-color: #0a5dba;
+            color: white;
+        }
+        
+        .btn-create:hover {
+            background-color: #0950a0;
+        }
+        
+        .error-message {
+            color: #f44336;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Create New Folder</h2>
+            </div>
+            
+            {% if parent_folder %}
+            <div class="folder-path">
+                Location: {{ parent_folder.get_path() }}
+            </div>
+            {% endif %}
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form action="{{ url_for('create_folder') }}" method="post" id="folderForm">
+                <div class="form-group">
+                    <label for="folder_name">Folder Name</label>
+                    <input type="text" id="folder_name" name="folder_name" class="form-control" required autofocus>
+                    <div class="error-message" id="nameError" style="display: none;"></div>
+                </div>
+                
+                <input type="hidden" name="parent_id" value="{{ parent_id }}">
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-cancel" onclick="window.history.back()">Cancel</button>
+                    <button type="submit" class="btn btn-create">Create Folder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Validation du formulaire
+        document.getElementById('folderForm').addEventListener('submit', function(e) {
+            const folderName = document.getElementById('folder_name').value.trim();
+            const nameError = document.getElementById('nameError');
+            
+            // Réinitialiser les erreurs
+            nameError.style.display = 'none';
+            
+            // Valider le nom du dossier
+            if (folderName === '') {
+                e.preventDefault();
+                nameError.textContent = 'Folder name is required';
+                nameError.style.display = 'block';
+                document.getElementById('folder_name').focus();
+                return;
+            }
+            
+            // Vérifier les caractères invalides
+            const invalidChars = /[<>:"\/\\|?*\x00-\x1F]/;
+            if (invalidChars.test(folderName)) {
+                e.preventDefault();
+                nameError.textContent = 'Folder name contains invalid characters';
+                nameError.style.display = 'block';
+                return;
+            }
+            
+            // Vérifier la longueur
+            if (folderName.length > 255) {
+                e.preventDefault();
+                nameError.textContent = 'Folder name is too long';
+                nameError.style.display = 'block';
+                return;
+            }
+        });
+    </script>
+</body>
+</html>

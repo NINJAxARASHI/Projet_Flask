@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}File Browser{% endblock %}
+
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/browse.css') }}">
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/browse.js') }}"></script>
+{% endblock %}
+
+
+{% block content %}
+    <a href="{{ url_for('admin_dashboard' if is_admin else 'user_dashboard') }}" class="back-button">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="11" stroke="black" stroke-width="2"/>
+            <path d="M15 8L9 12L15 16" stroke="black" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Back
+    </a>
+
+    <h1 class="browse-title">BROWSE</h1>
+    <div class="left-panel">
+        <ul class="folder-structure">
+            <li class="folder expanded">
+                {{ current_folder['folder_name'] }}
+                <ul>
+                    <li class="folder">notes</li>
+                    <li class="folder expanded">
+                        build
+                        <ul>
+                            <li class="file">appicon.png</li>
+                        </ul>
+                    </li>
+                    <li class="folder">frontend</li>
+                    <li class="folder expanded">
+                        picts
+                        <ul>
+                            <li class="file">.gitignore</li>
+                            <li class="file">.startproject</li>
+                            <li class="file">LICENSE</li>
+                            <li class="file">README.md</li>
+                            <li class="file">app.go</li>
+                            <li class="file">go.mod</li>
+                            <li class="file">go.sum</li>
+                            <li class="file">jsconfig.json</li>
+                            <li class="file">main.go</li>
+                            <li class="file">maskfile.md</li>
+                            <li class="file">server.go</li>
+                            <li class="file">wails.json</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div class="right-panel">
+        <div class="content-area">
+            <h2>Contenu sélectionné</h2>
+            <p>Sélectionnez un fichier ou un dossier dans le panneau de gauche pour voir son contenu ici.</p>
+        </div>
+    </div>
+{% endblock %wh}

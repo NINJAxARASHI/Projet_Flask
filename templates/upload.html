@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(to right, #36d1dc, #0a5fb4);
+            color: black;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            background-color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            width: fit-content;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            color: black;
+            border: none;
+            font-size: 18px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .back-button:hover {
+            transform: translateX(-5px) scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            background-color: #f0f0f0;
+        }
+
+        .back-button:active {
+            transform: translateX(0) scale(0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .back-button svg {
+            margin-right: 10px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .back-button:hover svg {
+            transform: translateX(-3px);
+        }
+        
+        .upload-title {
+            color: white;
+            font-size: 42px;
+            font-weight: bold;
+            margin: 15px 0 25px 0;
+        }
+        
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .upload-options {
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .option-item {
+            background-color: white;
+            padding: 15px;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .option-item:hover {
+            transform: translateX(10px) scale(1.02);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            background-color: #f8f9fa;
+        }
+
+        .option-item:active {
+            transform: translateX(0) scale(0.98);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .option-item.active {
+            background-color: #e3f2fd;
+            transform: translateX(10px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .option-icon {
+            margin-right: 15px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .option-item:hover .option-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .option-item.active .option-icon {
+            transform: scale(1.1);
+        }
+        
+        .upload-container {
+            background-color: white;
+            flex-grow: 1;
+            border-radius: 25px;
+            padding: 25px;
+        }
+        
+        .selected-title {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+        
+        .upload-box {
+            border: 3px dashed #ccc;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+        }
+        
+        .upload-icon {
+            margin-bottom: 15px;
+        }
+        
+        .upload-text {
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+        
+        .upload-subtext {
+            color: #777;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .file-button {
+            background-color: #0a5fb4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .file-button:hover {
+            background-color: #094a8d;
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .file-button:active {
+            transform: translateY(0) scale(0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .file-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .file-button:hover::before {
+            transform: translateX(100%);
+        }
+        
+        .upload-list {
+            margin-top: 30px;
+        }
+        
+        .upload-list-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .file-progress {
+            display: flex;
+            align-items: center;
+            background-color: #f5f5f5;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .file-info {
+            flex-grow: 1;
+        }
+        
+        .file-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .progress-bar {
+            background-color: #e0e0e0;
+            height: 10px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            background-color: #36d1dc;
+            height: 100%;
+            width: 70%;
+        }
+        
+        .file-size {
+            font-size: 14px;
+            color: #777;
+        }
+        
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-button {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-button:hover {
+            background-color: rgba(0, 0, 0, 0.15);
+            transform: scale(1.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-button:active {
+            transform: scale(0.9);
+            box-shadow: none;
+        }
+
+        .action-button svg {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 24px;
+            height: 24px;
+        }
+
+        .pause-button:hover svg {
+            transform: scale(1.2) rotate(90deg);
+        }
+
+        .cancel-button:hover svg {
+            transform: rotate(180deg) scale(1.2);
+        }
+
+        .delete-button:hover svg {
+            transform: rotate(180deg) scale(1.2);
+        }
+
+        .resume-button:hover svg {
+            transform: scale(1.2) rotate(-90deg);
+        }
+
+        .folder-select {
+            margin-bottom: 20px;
+        }
+
+        .folder-select select {
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            width: 100%;
+            font-size: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .folder-select select:hover {
+            border-color: #0a5fb4;
+            box-shadow: 0 0 0 2px rgba(10, 95, 180, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .folder-select select:focus {
+            outline: none;
+            border-color: #0a5fb4;
+            box-shadow: 0 0 0 3px rgba(10, 95, 180, 0.2);
+        }
+
+        .storage-info {
+            margin-top: 30px;
+            background-color: #f5f5f5;
+            border-radius: 15px;
+            padding: 15px;
+        }
+
+        .storage-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .storage-bar {
+            background-color: #e0e0e0;
+            height: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .storage-fill {
+            background-color: #0a5fb4;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .storage-text {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+
+        .flash-message {
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .flash-message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .flash-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .upload-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .upload-box {
+            background: #fff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .file-drop-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-drop-area:hover {
+            border-color: #4CAF50;
+            background: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-drop-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(76, 175, 80, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s ease;
+        }
+
+        .file-drop-area:hover::before {
+            transform: translateX(100%);
+        }
+
+        .file-drop-text {
+            color: #666;
+            position: relative;
+            z-index: 1;
+        }
+
+        .file-drop-text i {
+            font-size: 48px;
+            color: #4CAF50;
+            margin-bottom: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .file-drop-area:hover .file-drop-text i {
+            transform: scale(1.1);
+        }
+
+        .upload-progress {
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: #4CAF50;
+            transition: width 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: progress-shine 2s infinite;
+        }
+
+        @keyframes progress-shine {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .upload-button {
+            width: 100%;
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .upload-button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .upload-button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        .upload-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s ease;
+        }
+
+        .upload-button:hover::before {
+            transform: translateX(100%);
+        }
+
+        .button-text {
+            position: relative;
+            z-index: 1;
+        }
+
+        .button-icon {
+            position: relative;
+            z-index: 1;
+            transition: transform 0.3s ease;
+        }
+
+        .upload-button:hover .button-icon {
+            transform: translateY(-2px) rotate(5deg);
+        }
+
+        .upload-status {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #upload-list {
+            margin-top: 20px;
+        }
+
+        .upload-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            transition: all 0.3s ease;
+        }
+
+        .upload-item:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
+        }
+
+        .upload-item:last-child {
+            border-bottom: none;
+        }
+
+        .upload-item .file-name {
+            flex: 1;
+        }
+
+        .upload-item .file-status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .status-complete {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-uploading {
+            background: #cce5ff;
+            color: #004085;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        #notification {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            min-width: 300px;
+            max-width: 90vw;
+            z-index: 9999;
+            padding: 18px 32px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            opacity: 0.97;
+            transition: opacity 0.3s, top 0.3s;
+        }
+        .notification-success {
+            background: linear-gradient(90deg, #36d1dc, #81dc36);
+            color: #fff;
+        }
+        .notification-error {
+            background: linear-gradient(90deg, #ff5858, #f09819);
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('user_dashboard') }}" class="back-button">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="11" stroke="black" stroke-width="2"/>
+            <path d="M15 8L9 12L15 16" stroke="black" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Back
+    </a>
+    
+    <h1 class="upload-title">UPLOAD</h1>
+    
+    <div class="container">
+        <div class="upload-options">
+            <div class="option-item active" data-option="new-upload">
+                <svg class="option-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <rect x="2" y="2" width="20" height="20" rx="2" fill="black"/>
+                    <path d="M7 12H17" stroke="white" stroke-width="2"/>
+                    <path d="M12 7V17" stroke="white" stroke-width="2"/>
+                </svg>
+                New Upload
+            </div>
+            
+            <div class="option-item" data-option="local-files">
+                <svg class="option-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="black"/>
+                    <path d="M2 17L12 22L22 17" fill="black"/>
+                    <path d="M2 12L12 17L22 12" fill="black"/>
+                </svg>
+                Local Files
+            </div>
+            
+            <div class="option-item" data-option="media-files">
+                <svg class="option-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" fill="black"/>
+                    <path d="M10 8L16 12L10 16V8Z" fill="white"/>
+                </svg>
+                Media Files
+            </div>
+            
+            <div class="option-item" data-option="recent-files">
+                <svg class="option-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 6H21" stroke="black" stroke-width="2"/>
+                    <path d="M3 12H21" stroke="black" stroke-width="2"/>
+                    <path d="M3 18H21" stroke="black" stroke-width="2"/>
+                </svg>
+                Recent Files
+            </div>
+
+            <div class="storage-info">
+                <div class="storage-title">Storage Usage</div>
+                <div class="storage-bar">
+                    <div class="storage-fill" data-percentage="{{ storage_percentage|default(0) }}"></div>
+                </div>
+                <div class="storage-text">{{ used_storage|default('0 B') }} used of {{ total_storage|default('0 B') }}</div>
+            </div>
+        </div>
+        
+        <div class="upload-container">
+            <h2 class="selected-title">Selected: New Upload</h2>
+
+            {% if get_flashed_messages() %}
+            <div class="flash-messages">
+                {% for category, message in get_flashed_messages(with_categories=true) %}
+                <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div id="notification" class="flash-message hidden"></div>
+
+            <div class="folder-select">
+                <select id="folder-dropdown">
+                    <option value="">Root Directory</option>
+                    {% for folder in folders %}
+                    <option value="{{ folder.id }}">{{ folder.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div id="upload-form-section">
+                <form id="upload-form" enctype="multipart/form-data">
+                    <input type="hidden" name="folder_id" id="folder-id-input" value="">
+                    <input type="file" id="file-input" name="files[]" multiple class="hidden">
+                    <div class="upload-box" id="drop-zone">
+                        <svg class="upload-icon" width="64" height="64" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 16L12 4" stroke="#0a5fb4" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M7 9L12 4L17 9" stroke="#0a5fb4" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M20 16V20H4V16" stroke="#0a5fb4" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <div class="upload-text">Drag & Drop Files Here</div>
+                        <div class="upload-subtext">or select files from your computer</div>
+                        <button type="button" class="file-button" id="browse-button">Browse Files</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="upload-list" id="section-media-files" style="display:none;">
+                <h3 class="upload-list-title">Media Files</h3>
+                {% if media_files %}
+                    {% for file in media_files %}
+                    <div class="file-progress" data-file-id="{{ file.id }}">
+                        <div class="file-info">
+                            <div class="file-name">{{ file.name }}</div>
+                            <div class="file-size">{{ (file.size / 1024)|round|int }} KB</div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="action-button delete-button" data-file-id="{{ file.id }}">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="12" r="10" stroke="black" stroke-width="2"/>
+                                    <path d="M15 9L9 15" stroke="black" stroke-width="2"/>
+                                    <path d="M9 9L15 15" stroke="black" stroke-width="2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="color:#888;">No media files found.</div>
+                {% endif %}
+            </div>
+            <div class="upload-list" id="section-recent-files" style="display:none;">
+                <h3 class="upload-list-title">Recent Files</h3>
+                {% if recent_files %}
+                    {% for file in recent_files %}
+                    <div class="file-progress" data-file-id="{{ file.id }}">
+                        <div class="file-info">
+                            <div class="file-name">{{ file.name }}</div>
+                            <div class="file-size">{{ (file.size / 1024)|round|int }} KB</div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="action-button delete-button" data-file-id="{{ file.id }}">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="12" r="10" stroke="black" stroke-width="2"/>
+                                    <path d="M15 9L9 15" stroke="black" stroke-width="2"/>
+                                    <path d="M9 9L15 15" stroke="black" stroke-width="2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="color:#888;">No recent files found.</div>
+                {% endif %}
+            </div>
+            <div class="upload-list" id="section-local-files" style="display:none;">
+                <h3 class="upload-list-title">Local Files</h3>
+                {% if local_files %}
+                    {% for file in local_files %}
+                    <div class="file-progress" data-file-id="{{ file.id }}">
+                        <div class="file-info">
+                            <div class="file-name">{{ file.name }}</div>
+                            <div class="file-size">{{ (file.size / 1024)|round|int }} KB</div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="action-button delete-button" data-file-id="{{ file.id }}">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="12" r="10" stroke="black" stroke-width="2"/>
+                                    <path d="M15 9L9 15" stroke="black" stroke-width="2"/>
+                                    <path d="M9 9L15 15" stroke="black" stroke-width="2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="color:#888;">No local files found.</div>
+                {% endif %}
+            </div>
+            <div class="upload-list" id="section-current-uploads">
+                <h3 class="upload-list-title">Current Uploads</h3>
+                <div id="upload-progress-container">
+                    {% if uploads_in_progress %}
+                        {% for file in uploads_in_progress %}
+                        <div class="file-progress" data-file-id="{{ file.id }}">
+                            <div class="file-info">
+                                <div class="file-name">{{ file.name }}</div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 70%;"></div>
+                                </div>
+                                <div class="file-size">{{ (file.size / 1024)|round|int }} KB - In Progress</div>
+                            </div>
+                            <div class="file-actions">
+                                <button class="action-button pause-button" data-file-id="{{ file.id }}">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                        <circle cx="12" cy="12" r="10" stroke="black" stroke-width="2"/>
+                                        <path d="M9 12L15 12" stroke="black" stroke-width="2"/>
+                                    </svg>
+                                </button>
+                                <button class="action-button cancel-button" data-file-id="{{ file.id }}">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                        <circle cx="12" cy="12" r="10" stroke="black" stroke-width="2"/>
+                                        <path d="M15 9L9 15" stroke="black" stroke-width="2"/>
+                                        <path d="M9 9L15 15" stroke="black" stroke-width="2"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if completed_uploads %}
+                        {% for file in completed_uploads %}
+                        <div class="file-progress" data-file-id="{{ file.id }}">
+                            <div class="file-info">
+                                <div class="file-name">{{ file.name }}</div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 100%;"></div>
+                                </div>
+                                <div class="file-size">{{ (file.size / 1024)|round|int }} KB - Complete</div>
+                            </div>
+                            <div class="file-actions">
+                                <button class="action-button delete-button" data-file-id="{{ file.id }}">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                        <circle cx="12" cy="12" r="10" stroke="black" stroke-width="2"/>
+                                        <path d="M15 9L9 15" stroke="black" stroke-width="2"/>
+                                        <path d="M9 9L15 15" stroke="black" stroke-width="2"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('file-input');
+            const browseButton = document.getElementById('browse-button');
+            const uploadForm = document.getElementById('upload-form');
+            const folderDropdown = document.getElementById('folder-dropdown');
+            const folderIdInput = document.getElementById('folder-id-input');
+            const uploadProgressContainer = document.getElementById('upload-progress-container');
+            
+            // Update folder ID input when dropdown changes
+            folderDropdown.addEventListener('change', function() {
+                folderIdInput.value = this.value;
+            });
+            
+            // Handle browse button click
+            browseButton.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            // Handle file selection
+            fileInput.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    uploadFiles(this.files);
+                }
+            });
+            
+            // Handle drag and drop events
+            dropZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                dropZone.style.borderColor = '#0a5fb4';
+                dropZone.style.backgroundColor = '#f0f7ff';
+            });
+            
+            dropZone.addEventListener('dragleave', function() {
+                dropZone.style.borderColor = '#ccc';
+                dropZone.style.backgroundColor = '#f9f9f9';
+            });
+            
+            dropZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                dropZone.style.borderColor = '#ccc';
+                dropZone.style.backgroundColor = '#f9f9f9';
+                
+                if (e.dataTransfer.files.length > 0) {
+                    uploadFiles(e.dataTransfer.files);
+                }
+            });
+            
+            // Upload files function
+            function uploadFiles(files) {
+                const formData = new FormData();
+                
+                // Add folder ID if selected
+                if (folderDropdown.value) {
+                    formData.append('folder_id', folderDropdown.value);
+                }
+                
+                // Add all files to form data
+                for (let i = 0; i < files.length; i++) {
+                    formData.append('files[]', files[i]);
+                }
+                
+                // Create upload progress elements
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const fileId = 'temp-' + Date.now() + '-' + i;
+                    const fileSize = formatFileSize(file.size);
+                    
+                    const progressElement = createProgressElement(fileId, file.name, fileSize, 0);
+                    uploadProgressContainer.insertBefore(progressElement, uploadProgressContainer.firstChild);
+                }
+                
+                // Send upload request
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/api/files/upload', true);
+                
+                xhr.upload.addEventListener('progress', function(e) {
+                    if (e.lengthComputable) {
+                        const progressPercent = (e.loaded / e.total) * 100;
+                        
+                        // Update all progress bars for this upload
+                        const tempProgressElements = document.querySelectorAll('.file-progress[data-file-id^="temp-"]');
+                        tempProgressElements.forEach(function(element) {
+                            const progressFill = element.querySelector('.progress-fill');
+                            progressFill.style.width = progressPercent + '%';
+                        });
+                    }
+                });
+                
+                xhr.addEventListener('load', function() {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+                        
+                        if (response.success) {
+                            // Remove temporary elements and show success
+                            const tempProgressElements = document.querySelectorAll('.file-progress[data-file-id^="temp-"]');
+                            tempProgressElements.forEach(function(element) {
+                                element.remove();
+                            });
+                            
+                            // Reload the page to show the new uploads
+                            window.location.reload();
+                        } else {
+                            showNotification('Upload failed: ' + response.message, 'error');
+                            
+                            // Remove temporary elements
+                            const tempProgressElements = document.querySelectorAll('.file-progress[data-file-id^="temp-"]');
+                            tempProgressElements.forEach(function(element) {
+                                element.remove();
+                            });
+                        }
+                    } else {
+                        showNotification('Upload failed with status: ' + xhr.status, 'error');
+                    }
+                });
+                
+                xhr.addEventListener('error', function() {
+                    showNotification('Upload failed. Please try again.', 'error');
+                });
+                
+                xhr.send(formData);
+            }
+            
+            // Format file size helper
+            function formatFileSize(bytes) {
+                if (bytes < 1024) {
+                    return bytes + ' B';
+                } else if (bytes < 1024 * 1024) {
+                    return (bytes / 1024).toFixed(1) + ' KB';
+                } else if (bytes < 1024 * 1024 * 1024) {
+                    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+                } else {
+                    return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+                }
+            }
+            
+            // Create progress element helper
+            function createProgressElement(fileId, fileName, fileSize, progress) {
+                const fileProgress = document.createElement('div');
+                fileProgress.className = 'file-progress';
+                fileProgress.dataset.fileId = fileId;
+                
+                fileProgress.innerHTML = `
+                    <div class="file-info">
+                        <div class="file-name">${fileName}</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progress}%;"></div>
+                        </div>
+                        <div class="file-size">${fileSize} - Uploading...</div>
+                    </div>
+                    <div class="file-actions">
+                        <button class="action-button cancel-button" data-file-id="${fileId}">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="black" stroke-width="2"/>
+                                <path d="M15 9L9 15" stroke="black" stroke-width="2"/>
+                                <path d="M9 9L15 15" stroke="black" stroke-width="2"/>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                
+                return fileProgress;
+            }
+            
+            // Handle pause button clicks
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.pause-button')) {
+                    const button = e.target.closest('.pause-button');
+                    const fileId = button.dataset.fileId;
+                    
+                    fetch(`/api/files/${fileId}/pause`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update UI to show paused state
+                            const progressElement = document.querySelector(`.file-progress[data-file-id="${fileId}"]`);
+                            const fileSize = progressElement.querySelector('.file-size');
+                            fileSize.textContent = fileSize.textContent.replace('In Progress', 'Paused');
+                            
+                            // Change pause button to resume button
+                            button.innerHTML = `
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="12" r="10" stroke="black" stroke-width="2"/>
+                                    <path d="M10 8L16 12L10 16V8Z" fill="black"/>
+                                </svg>
+                            `;
+                            button.classList.remove('pause-button');
+                            button.classList.add('resume-button');
+                        }
+                    });
+                }
+                else if (e.target.closest('.resume-button')) {
+                    const button = e.target.closest('.resume-button');
+                    const fileId = button.dataset.fileId;
+                    
+                    fetch(`/api/files/${fileId}/resume`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update UI to show in progress state
+                            const progressElement = document.querySelector(`.file-progress[data-file-id="${fileId}"]`);
+                            const fileSize = progressElement.querySelector('.file-size');
+                            fileSize.textContent = fileSize.textContent.replace('Paused', 'In Progress');
+                            
+                            // Change resume button to pause button
+                            button.innerHTML = `
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="12" r="10" stroke="black" stroke-width="2"/>
+                                    <path d="M9 12L15 12" stroke="black" stroke-width="2"/>
+                                </svg>
+                            `;
+                            button.classList.remove('resume-button');
+                            button.classList.add('pause-button');
+                        }
+                    });
+                }
+                else if (e.target.closest('.cancel-button') || e.target.closest('.delete-button')) {
+                    const button = e.target.closest('.cancel-button') || e.target.closest('.delete-button');
+                    const fileId = button.dataset.fileId;
+                    // Skip for temporary uploads that don't have a real file ID yet
+                    if (fileId && fileId.startsWith('temp-')) {
+                        const progressElement = document.querySelector(`.file-progress[data-file-id="${fileId}"]`);
+                        if (progressElement) {
+                            progressElement.remove();
+                        }
+                        return;
+                    }
+                    fetch(`/api/files/${fileId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Remove the file element from UI
+                            const progressElement = document.querySelector(`.file-progress[data-file-id="${fileId}"]`);
+                            if (progressElement) {
+                                progressElement.remove();
+                            }
+                            showNotification(data.message || 'Fichier supprimé avec succès', 'success');
+                            window.location.reload();
+                        } else {
+                            showNotification(data.message || 'Une erreur est survenue lors de la suppression du fichier', 'error');
+                        }
+                    });
+                }
+            });
+            
+            // Affichage dynamique des sections
+            const optionItems = document.querySelectorAll('.option-item');
+            const sectionIds = ['section-current-uploads', 'section-local-files', 'section-media-files', 'section-recent-files'];
+            const optionToSection = {
+                'new-upload': 'section-current-uploads',
+                'local-files': 'section-local-files',
+                'media-files': 'section-media-files',
+                'recent-files': 'section-recent-files'
+            };
+            function showSection(option) {
+                sectionIds.forEach(id => {
+                    document.getElementById(id).style.display = 'none';
+                });
+                document.getElementById(optionToSection[option]).style.display = '';
+                document.querySelector('.selected-title').textContent = 'Selected: ' + document.querySelector('.option-item[data-option="' + option + '"]').textContent.trim();
+                // Afficher ou masquer le formulaire d'upload
+                if (option === 'new-upload' || option === 'local-files') {
+                    document.getElementById('upload-form-section').style.display = '';
+                    // Ajouter ou retirer le champ is_local
+                    let isLocalInput = document.getElementById('is-local-input');
+                    if (option === 'local-files') {
+                        if (!isLocalInput) {
+                            isLocalInput = document.createElement('input');
+                            isLocalInput.type = 'hidden';
+                            isLocalInput.name = 'is_local';
+                            isLocalInput.id = 'is-local-input';
+                            isLocalInput.value = '1';
+                            document.getElementById('upload-form').appendChild(isLocalInput);
+                        }
+                    } else if (isLocalInput) {
+                        isLocalInput.remove();
+                    }
+                } else {
+                    document.getElementById('upload-form-section').style.display = 'none';
+                }
+            }
+            optionItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    optionItems.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    showSection(this.getAttribute('data-option'));
+                });
+            });
+            // Afficher la section par défaut
+            showSection('new-upload');
+            
+            // Periodically update upload status
+            function updateUploadStatus() {
+                fetch('/api/files/status')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Could update UI with latest status if needed
+                        }
+                    });
+            }
+            
+            // Update status every 5 seconds
+            setInterval(updateUploadStatus, 5000);
+
+            // Set storage fill width
+            const storageFill = document.querySelector('.storage-fill');
+            if (storageFill) {
+                const percentage = storageFill.dataset.percentage;
+                storageFill.style.width = `${percentage}%`;
+            }
+
+            // Fonction pour afficher une notification
+            function showNotification(message, type = 'success') {
+                const notif = document.getElementById('notification');
+                notif.textContent = message;
+                notif.className = 'flash-message ' + (type === 'success' ? 'success' : 'error');
+                notif.classList.remove('hidden');
+                setTimeout(() => {
+                    notif.classList.add('hidden');
+                }, 3500);
+            }
+
+            // SUPPRESSION UNIVERSELLE DES FICHIERS
+            document.addEventListener('click', async function(e) {
+                if (e.target.closest('.delete-button') || e.target.closest('.cancel-button')) {
+                    const button = e.target.closest('.delete-button') || e.target.closest('.cancel-button');
+                    const fileElement = button.closest('.file-progress');
+                    const fileId = fileElement.dataset.fileId;
+                    const fileSizeText = fileElement.querySelector('.file-size')?.textContent || '';
+
+                    // Log pour debug
+                    console.log('Suppression du fichier', fileId, 'URL:', `/api/files/${fileId}`);
+
+                    // Vérification stricte de l'ID
+                    if (!fileId || isNaN(Number(fileId))) {
+                        showNotification('ID de fichier invalide, impossible de supprimer.', 'error');
+                        return;
+                    }
+
+                    // Ignorer les uploads temporaires
+                    if (fileId.startsWith('temp-')) {
+                        fileElement.remove();
+                        return;
+                    }
+
+                    if (confirm('Êtes-vous sûr de vouloir supprimer ce fichier ?')) {
+                        try {
+                            let response, data;
+                            // Si le fichier est "In Progress", utiliser la route cancel
+                            if (fileSizeText.includes('In Progress') || fileSizeText.includes('Paused')) {
+                                response = await fetch(`/api/files/${fileId}/cancel`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    }
+                                });
+                            } else {
+                                response = await fetch(`/api/files/${fileId}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    }
+                                });
+                            }
+                            data = await response.json();
+                            if (response.ok && data.success) {
+                                showNotification(data.message || 'Fichier supprimé avec succès', 'success');
+                                setTimeout(() => window.location.reload(), 1200);
+                            } else if (response.status === 404) {
+                                showNotification('Fichier déjà supprimé ou introuvable.', 'error');
+                                setTimeout(() => window.location.reload(), 1200);
+                            } else {
+                                showNotification(data.message || 'Une erreur est survenue lors de la suppression du fichier', 'error');
+                            }
+                        } catch (error) {
+                            console.error('Erreur lors de la suppression:', error);
+                            showNotification('Une erreur est survenue lors de la suppression du fichier. Veuillez réessayer.', 'error');
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

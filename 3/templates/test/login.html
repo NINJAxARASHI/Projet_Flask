@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        /* Style Global */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+            background-color: white;
+        }
+
+        /* Conteneur principal */
+        .container {
+            display: flex;
+            width: 100%;
+        }
+
+        /* Partie Gauche (Bleue) */
+        .left-panel {
+            width: 50%;
+            background: linear-gradient(to right, #5de, #004aad);
+            color: white;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Triangle en haut à gauche */
+        .left-panel::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 10px;
+            height: 0;
+            border-left: 60px solid #0096c7;
+            border-top: 50px solid transparent;
+            border-bottom: 50px solid transparent;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container">
+        <!-- Partie Gauche -->
+        <div class="left-panel">
+            <h1 class="logo-title">L-CLOUD</h1>
+            <img src="{{ url_for('static', filename='images/fond.png') }}" alt="Illustration" class="illustration">
+            <p class="slogan">Your data is your data.</p>
+        </div>
+
+        <!-- Partie Droite -->
+        <div class="right-panel">
+            <div class="login-box">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+                <h2 class="welcome">WELCOME AGAIN!</h2>
+                <p class="details">Please enter your details</p>
+
+                <form method="POST" action="{{ url_for('login') }}">
+
+                    <div class="input-container">
+                        <input type="text" id="username" name="username" placeholder=" " autofocus required>
+                        <label for="username">Username</label>
+                    </div>
+
+                    <div class="input-container password-container">
+                        <input type="password" id="password" name="password" placeholder=" " required>
+                        <label for="password">Password</label>
+                        <span class="toggle-password" role="button" tabindex="0">👁️</span>
+                    </div>
+                    <button type="submit">Log In</button>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

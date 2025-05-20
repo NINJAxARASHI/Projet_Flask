@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% block title %}File Browser{% endblock %}
+
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/browse.css') }}">
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/browse.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+    <a href="{{ url_for('admin_dashboard' if is_admin else 'user_dashboard') }}" class="back-button">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="11" stroke="black" stroke-width="2"/>
+            <path d="M15 8L9 12L15 16" stroke="black" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Back
+    </a>
+
+    <h1 class="browse-title">BROWSE</h1>
+    
+    <div class="container">
+        <div class="left-panel">
+            <div class="folder-header">
+                <h2>Folders</h2>
+                {% if not is_admin or current_folder.owner_id == session.user_id %}
+                <button id="new-folder-btn" class="action-button">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 3V13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    New Folder
+                </button>
+                {% endif %}
+            </div>
+            
+            <ul class="folder-structure">
+                {% macro render_folder_tree(folders) %}
+                    {% for folder in folders %}
+                        <li class="folder {% if folder.expanded %}expanded{% endif %}">
+                            <a href="{{ url_for('browse', folder_id=folder.id) }}" class="folder-link {% if folder.is_current %}current{% endif %}">
+                                <span class="folder-toggle">
+                                    <svg class="icon-collapsed" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                        <path d="M4 2L8 6L4 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                    <svg class="icon-expanded" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                        <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                </span>
+                                {{ folder.name }}
+                            </a>
+                            {% if folder.subfolders %}
+                                <ul>
+                                    {{ render_folder_tree(folder.subfolders) }}
+                                </ul>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                {% endmacro %}
+                
+                {{ render_folder_tree(folder_structure) }}
+            </ul>
+        </div>
+        
+        <div class="right-panel">
+            <div class="path-navigation">
+                <a href="{{ url_for('browse') }}">Home</a>
+                {% for folder in folder_hierarchy %}
+                    <span class="path-separator">/</span>
+                    <a href="{{ url_for('browse', folder_id=folder.id) }}">{{ folder.folder_name }}</a>
+                {% endfor %}
+                {% if folder_hierarchy %}
+                    <span class="path-separator">/</span>
+                    <span class="current-folder">{{ current_folder.folder_name }}</span>
+                {% else %}
+                    <span class="path-separator">/</span>
+                    <span class="current-folder">{{ current_folder.folder_name }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="actions-bar">
+                {% if not is_admin or current_folder.owner_id == session.user_id %}
+                <button id="upload-btn" class="action-button">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 12V4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M4 8L8 4L12 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Upload Files
+                </button>
+                {% endif %}
+            </div>
+            
+            <div class="content-area">
+                {% if subfolders or files %}
+                    <div class="item-list">
+                        <div class="list-header">
+                            <div class="item-name">Name</div>
+                            <div class="item-owner">Owner</div>
+                            <div class="item-date">Date</div>
+                            <div class="item-size">Size</div>
+                            <div class="item-actions">Actions</div>
+                        </div>
+                        
+                        {% for subfolder in subfolders %}
+                            <div class="list-item folder-item">
+                                <div class="item-name">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                        <path d="M1 3C1 2.44772 1.44772 2 2 2H6.5L8 4H14C14.5523 4 15 4.44772 15 5V13C15 13.5523 14.5523 14 14 14H2C1.44772 14 1 13.5523 1 13V3Z" stroke="currentColor" stroke-width="1.5"/>
+                                    </svg>
+                                    <a href="{{ url_for('browse', folder_id=subfolder.id) }}">{{ subfolder.folder_name }}</a>
+                                </div>
+                                <div class="item-owner">{{ subfolder.owner_name }}</div>
+                                <div class="item-date">{{ subfolder.created_date }}</div>
+                                <div class="item-size">-</div>
+                                <div class="item-actions">
+                                    {% if subfolder.owner_id == session.user_id or is_admin %}
+                                    <button class="icon-button delete-folder" data-id="{{ subfolder.id }}">
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                            <path d="M2 4H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                            <path d="M5 4V3C5 2.44772 5.44772 2 6 2H10C10.5523 2 11 2.44772 11 3V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                            <path d="M12 4V13C12 13.5523 11.5523 14 11 14H5C4.44772 14 4 13.5523 4 13V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        </svg>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                        
+                        {% for file in files %}
+                            <div class="list-item file-item">
+                                <div class="item-name">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                        <path d="M3 1C3 0.447715 3.44772 0 4 0H10.5858C10.851 0 11.1054 0.105357 11.2929 0.292893L14.7071 3.70711C14.8946 3.89464 15 4.149 15 4.41421V15C15 15.5523 14.5523 16 14 16H4C3.44772 16 3 15.5523 3 15V1Z" stroke="currentColor" stroke-width="1.5"/>
+                                    </svg>
+                                    <a href="{{ url_for('download_file', file_id=file.id) }}">{{ file.original_filename }}</a>
+                                </div>
+                                <div class="item-owner">{{ file.uploaded_by_name }}</div>
+                                <div class="item-date">{{ file.upload_date }}</div>
+                                <div class="item-size">{{ (file.filesize / 1024)|round(1) }} KB</div>
+                                <div class="item-actions">
+                                    <a href="{{ url_for('download_file', file_id=file.id) }}" class="icon-button">
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                            <path d="M8 3V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                            <path d="M4 8L8 12L12 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                            <path d="M3 14H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        </svg>
+                                    </a>
+                                    {% if file.uploaded_by == session.user_id or is_admin %}
+                                    <button class="icon-button delete-file" data-id="{{ file.id }}">
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                            <path d="M2 4H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                            <path d="M5 4V3C5 2.44772 5.44772 2 6 2H10C10.5523 2 11 2.44772 11 3V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                            <path d="M12 4V13C12 13.5523 11.5523 14 11 14H5C4.44772 14 4 13.5523 4 13V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        </svg>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-folder">
+                        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                            <path d="M10 14C10 12.8954 10.8954 12 12 12H26L32 20H52C53.1046 20 54 20.8954 54 22V54C54 55.1046 53.1046 56 52 56H12C10.8954 56 10 55.1046 10 54V14Z" stroke="currentColor" stroke-width="2"/>
+                            <path d="M32 36V36.5M32 40V48" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <p>This folder is empty</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal pour créer un nouveau dossier -->
+    <div id="new-folder-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Folder</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form action="{{ url_for('browse', folder_id=current_folder.id) }}" method="post">
+                <input type="hidden" name="action" value="create_folder">
+                <div class="form-group">
+                    <label for="folder_name">Folder Name:</label>
+                    <input type="text" id="folder_name" name="folder_name" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn">Cancel</button>
+                    <button type="submit" class="submit-btn">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal pour télécharger des fichiers -->
+    <div id="upload-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Upload Files</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form action="{{ url_for('browse', folder_id=current_folder.id) }}" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="upload">
+                <div class="form-group">
+                    <label for="file">Select Files:</label>
+                    <input type="file" id="file" name="file" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn">Cancel</button>
+                    <button type="submit" class="submit-btn">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

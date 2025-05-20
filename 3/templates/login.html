@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}L-Cloud Login{% endblock %}
+
+{% block styles %}
+    <link href="{{ url_for('static', filename='css/login.css') }}" rel="stylesheet">
+{% endblock %}
+
+
+{% block content %}
+    <div class="container">
+        <!-- Partie Gauche -->
+        <div class="left-panel">
+            <h1 class="logo-title">L-CLOUD</h1>
+            <img src="{{ url_for('static', filename='images/fond.png') }}" alt="Illustration" class="illustration">
+            <p class="slogan">Your data is your data.</p>
+        </div>
+
+        <!-- Partie Droite -->
+        <div class="right-panel">
+            <div class="login-box">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+                <h2 class="welcome">WELCOME AGAIN!</h2>
+                <p class="details">Please enter your details</p>
+                
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="input-container">
+                        <input type="text" id="username" name="username" placeholder=" " autofocus required>
+                        <label for="username">Username</label>
+                    </div>
+
+                    <div class="input-container password-container">
+                        <input type="password" id="password" name="password" placeholder=" " required>
+                        <label for="password">Password</label>
+                        <span class="toggle-password" role="button" tabindex="0">👁️</span>
+                    </div>
+
+
+                    <button type="submit">Log In</button>
+                </form>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+    
+{% endblock %}
+
+{% block scripts %}
+    <link rel="script" href="{{ url_for('static', filename='js/login.js') }}""></script>
+{% endblock %}
+
+

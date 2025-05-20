@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L-Cloud - Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style1.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/logo.png') }}" type="image/png">
+    <style>
+        .register-title {
+            font-size: 26px;
+            font-family: 'Tabarra Sans', sans-serif;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+        
+        .login-link {
+            margin-top: 15px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .login-link a {
+            color: blue;
+            text-decoration: none;
+        }
+        
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .password-strength {
+            margin-top: 5px;
+            font-size: 12px;
+            text-align: left;
+            color: #777;
+        }
+        
+        .password-meter {
+            height: 4px;
+            background-color: #f0f0f0;
+            margin-top: 5px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .password-meter-fill {
+            height: 100%;
+            width: 0;
+            background-color: #ff5252;
+            transition: width 0.3s, background-color 0.3s;
+        }
+        
+        .password-meter-fill.weak {
+            width: 33%;
+            background-color: #ff5252;
+        }
+        
+        .password-meter-fill.medium {
+            width: 66%;
+            background-color: #ffc107;
+        }
+        
+        .password-meter-fill.strong {
+            width: 100%;
+            background-color: #4caf50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container fade-in">
+        <!-- Partie Gauche -->
+        <div class="left-panel">
+            <h1 class="logo-title">L-CLOUD</h1>
+            <img src="{{ url_for('static', filename='images/fond.png') }}" alt="Illustration" class="illustration">
+            <p class="slogan">Your data is your data.</p>
+        </div>
+
+        <!-- Partie Droite -->
+        <div class="right-panel">
+            <div class="login-box">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+                <h2 class="register-title">CREATE AN ACCOUNT</h2>
+                <p class="details">Please enter your information</p>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="{{ category }}-message">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <form action="{{ url_for('register') }}" method="post">
+                    <div class="input-container">
+                        <input type="email" name="email" id="email" placeholder=" " required>
+                        <label for="email">Email</label>
+                    </div>
+
+                    <div class="input-container password-container">
+                        <input type="password" name="password" id="password" placeholder=" " required minlength="8">
+                        <label for="password">Password</label>
+                        <span class="toggle-password">👁️</span>
+                    </div>
+                    
+                    <div class="password-strength">
+                        <div class="password-meter">
+                            <div class="password-meter-fill" id="passwordStrengthMeter"></div>
+                        </div>
+                        <span id="passwordStrengthText">Password strength</span>
+                    </div>
+
+                    <div class="input-container password-container">
+                        <input type="password" name="confirm_password" id="confirm_password" placeholder=" " required>
+                        <label for="confirm_password">Confirm Password</label>
+                        <span class="toggle-password">👁️</span>
+                    </div>
+
+                    <button type="submit">Create Account</button>
+                </form>
+                
+                <div class="login-link">
+                    Already have an account? <a href="{{ url_for('home') }}">Log in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Afficher/masquer le mot de passe
+        document.querySelectorAll('.toggle-password').forEach(icon => {
+            icon.addEventListener('click', function() {
+                const passwordInput = this.previousElementSibling.previousElementSibling;
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.textContent = type === 'password' ? '👁️' : '👁️‍🗨️';
+            });
+        });
+        
+        // Vérificateur de force du mot de passe
+        const passwordInput = document.getElementById('password');
+        const strengthMeter = document.getElementById('passwordStrengthMeter');
+        const strengthText = document.getElementById('passwordStrengthText');
+        
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            
+            // Longueur
+            if (password.length >= 8) strength += 1;
+            if (password.length >= 12) strength += 1;
+            
+            // Complexité
+            if (/[A-Z]/.test(password)) strength += 1;
+            if (/[a-z]/.test(password)) strength += 1;
+            if (/[0-9]/.test(password)) strength += 1;
+            if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+            
+            // Afficher le résultat
+            strengthMeter.className = 'password-meter-fill';
+            
+            if (password.length === 0) {
+                strengthMeter.style.width = '0';
+                strengthText.textContent = 'Password strength';
+            } else if (strength < 4) {
+                strengthMeter.classList.add('weak');
+                strengthText.textContent = 'Weak';
+            } else if (strength < 6) {
+                strengthMeter.classList.add('medium');
+                strengthText.textContent = 'Medium';
+            } else {
+                strengthMeter.classList.add('strong');
+                strengthText.textContent = 'Strong';
+            }
+        });
+        
+        // Validation du formulaire
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Passwords do not match!');
+            }
+        });
+    </script>
+</body>
+</html>

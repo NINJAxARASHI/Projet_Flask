@@ -1,0 +1,4 @@
+set <==> env [linux]
+ver 	   	=====> 		determine the operating system (OS) versi 
+systeminfo	=====> 		list various information about the system such as OS information, system details, processor and memory
+you can pipe it through more if the output is too long   [ systeminfo | more ]
