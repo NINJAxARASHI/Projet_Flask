@@ -134,7 +134,12 @@ def decrypt_with_rsa(encrypted_data, private_key):
 
 def generate_hmac(message, key):
     """Génère un HMAC SHA-256 pour le message donné avec la clé donnée."""
-    h = hmac.new(key, message.encode(), hashlib.sha256)
+    import hmac
+    import hashlib
+    import base64
+    if isinstance(message, str):
+        message = message.encode()
+    h = hmac.new(key, message, hashlib.sha256)
     return base64.b64encode(h.digest()).decode()
 
 def sign_message(message, private_key):

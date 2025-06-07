@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_file
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_file, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -79,6 +79,9 @@ class File(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_starred = db.Column(db.Boolean, default=False)
     status = db.Column(db.String(20), nullable=False, default='complete')
+    hmac = db.Column(db.Text, nullable=True)  # HMAC du fichier
+    hmac_signature = db.Column(db.Text, nullable=True)  # Signature du HMAC avec la clé privée du fichier
+    file_public_key = db.Column(db.Text, nullable=True)  # Clé publique du fichier pour la vérification
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -423,17 +426,15 @@ def upload():
 def upload_file():
     if 'files[]' not in request.files:
         return jsonify({'success': False, 'message': 'No file part'})
-
+        
     files = request.files.getlist('files[]')
-    folder_id = request.form.get('folder_id', type=int)
+    folder_id = request.form.get('folder_id')
     
-    # Make folder_id optional
-    if folder_id:
-        folder = Folder.query.get_or_404(folder_id)
-        if folder.owner_id != current_user.id and not current_user.is_admin:
-            return jsonify({'success': False, 'message': 'Access denied'})
-
-    used_storage = sum(f.size for f in current_user.files)
+    if not files:
+        return jsonify({'success': False, 'message': 'No selected file'})
+        
+    # Get current storage usage
+    used_storage = sum(f.size for f in File.query.filter_by(owner_id=current_user.id).all())
     
     uploaded_files = []
     for file in files:
@@ -450,10 +451,26 @@ def upload_file():
         unique_filename = f"{uuid.uuid4()}_{filename}"
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
         
-        is_local = request.form.get('is_local') == '1'
-        
         try:
+            # Lire le contenu du fichier
+            file_content = file.read()
+            file.seek(0)  # Reset file pointer
+            
+            # Générer une paire de clés RSA pour le fichier
+            file_private_key, file_public_key = generate_rsa_keys()
+            
+            # Générer une clé HMAC aléatoire (bytes)
+            hmac_key = os.urandom(32)
+            
+            # Générer le HMAC du fichier
+            file_hmac = generate_hmac(file_content, hmac_key)
+            
+            # Signer le HMAC avec la clé privée du fichier
+            hmac_signature = sign_message(file_hmac, file_private_key)
+            
+            # Sauvegarder le fichier
             file.save(file_path)
+            
             new_file = File(
                 name=filename,
                 filename=unique_filename,
@@ -462,30 +479,31 @@ def upload_file():
                 folder_id=folder_id,
                 owner_id=current_user.id,
                 status='complete',
-                is_starred=is_local
+                hmac=file_hmac,
+                hmac_signature=hmac_signature,
+                file_public_key=file_public_key.public_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PublicFormat.SubjectPublicKeyInfo
+                ).decode()
             )
             db.session.add(new_file)
-            db.session.commit()  # Commit each file individually to get ID
-            uploaded_files.append(new_file)  # Add the file object to the list
+            db.session.commit()
+            uploaded_files.append(new_file)
             used_storage += file_size
             
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)})
 
-    try:
-        return jsonify({
-            'success': True,
-            'message': f"Successfully uploaded {len(uploaded_files)} files",
-            'files': [{
-                'id': f.id,
-                'name': f.name,
-                'size': f.size,
-                'status': 'complete'
-            } for f in uploaded_files]
-        })
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)})
+    return jsonify({
+        'success': True,
+        'message': f"Successfully uploaded {len(uploaded_files)} files",
+        'files': [{
+            'id': f.id,
+            'name': f.name,
+            'size': f.size,
+            'status': 'complete'
+        } for f in uploaded_files]
+    })
     
 @app.route('/api/files/status', methods=['GET'])
 @login_required
@@ -659,16 +677,44 @@ def create_folder():
 def download_file(file_id):
     file = File.query.get_or_404(file_id)
     
-    # Vérifier si l'utilisateur a accès au fichier
-    if not current_user.is_admin and file.owner_id != current_user.id:
-        flash('You do not have permission to download this file.', 'error')
-        return redirect(url_for('browse'))
+    # Vérifier les permissions
+    if file.owner_id != current_user.id and not current_user.is_admin:
+        abort(403)
     
-    return send_file(
-        os.path.join(app.config['UPLOAD_FOLDER'], file.filename),
-        as_attachment=True,
-        download_name=file.name
-    )
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+    if not os.path.exists(file_path):
+        abort(404)
+    
+    try:
+        # Lire le contenu du fichier
+        with open(file_path, 'rb') as f:
+            file_content = f.read()
+        
+        # Récupérer la clé publique du fichier
+        if not file.file_public_key:
+            abort(500, description="Missing file public key")
+        
+        # Charger la clé publique
+        public_key = serialization.load_pem_public_key(
+            file.file_public_key.encode(),
+            backend=default_backend()
+        )
+        
+        # Calculer le HMAC du fichier
+        current_hmac = generate_hmac(file_content, public_key)
+        
+        # Vérifier la signature du HMAC
+        if not verify_signature(current_hmac, file.hmac_signature, public_key):
+            abort(500, description="File integrity check failed")
+        
+        return send_file(
+            file_path,
+            as_attachment=True,
+            download_name=file.name,
+            mimetype=file.mime_type
+        )
+    except Exception as e:
+        abort(500, description=str(e))
 
 @app.route('/view_file/<int:file_id>')
 @login_required
@@ -1450,7 +1496,9 @@ def generate_hmac(message, key):
     import hmac
     import hashlib
     import base64
-    h = hmac.new(key, message.encode(), hashlib.sha256)
+    if isinstance(message, str):
+        message = message.encode()
+    h = hmac.new(key, message, hashlib.sha256)
     return base64.b64encode(h.digest()).decode()
 
 @app.route('/api/announcements/<int:announcement_id>', methods=['DELETE'])
