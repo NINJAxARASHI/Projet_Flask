@@ -238,7 +238,7 @@
         
         .form-input {
             width: 100%;
-            padding: 10px;
+            padding: 10px 40px 10px 10px;
             border: 2px solid #eee;
             border-radius: 8px;
             font-size: 16px;
@@ -467,6 +467,70 @@
         .search-btn:hover {
             transform: scale(1.1);
         }
+
+        /* Password requirements styles */
+        .password-requirements {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            font-size: 0.9em;
+            text-align: left;
+        }
+
+        .requirements-title {
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .requirements-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+
+        .requirements-list li {
+            color: #666;
+            margin: 3px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .requirements-list li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #0a5fb4;
+        }
+
+        /* Style for the new input-wrapper */
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        /* Styles for password toggle */
+        .form-group.password-toggle-container {
+            position: relative;
+        }
+
+        .password-toggle-button {
+            position: absolute;
+            right: 43px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            color: #555;
+            z-index: 2;
+        }
+
+        .password-toggle-button:hover {
+            color: #0a5fb4;
+        }
     </style>
 </head>
 <body>
@@ -629,13 +693,33 @@
                     <label class="form-label" for="email">Email</label>
                     <input type="email" id="email" name="email" class="form-input" required>
                 </div>
-                <div class="form-group">
+                <div class="form-group password-toggle-container">
                     <label class="form-label" for="password">Password</label>
-                    <input type="password" id="password" name="password" class="form-input" required>
+                    <div class="input-wrapper">
+                        <input type="password" id="password" name="password" class="form-input" required>
+                        <button type="button" class="password-toggle-button" onclick="togglePasswordVisibility('password')">
+                            👁️
+                        </button>
+                    </div>
                 </div>
-                <div class="form-group">
+                <div class="password-requirements">
+                    <div class="requirements-title">Le mot de passe doit contenir :</div>
+                    <ul class="requirements-list">
+                        <li>Au moins 8 caractères</li>
+                        <li>Au moins une lettre majuscule</li>
+                        <li>Au moins une lettre minuscule</li>
+                        <li>Au moins un chiffre</li>
+                        <li>Au moins un caractère spécial</li>
+                    </ul>
+                </div>
+                <div class="form-group password-toggle-container">
                     <label class="form-label" for="confirm_password">Confirm Password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" class="form-input" required>
+                    <div class="input-wrapper">
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-input" required>
+                        <button type="button" class="password-toggle-button" onclick="togglePasswordVisibility('confirm_password')">
+                            👁️
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">
@@ -657,13 +741,33 @@
             <h3 class="modal-title">Reset User Password</h3>
             <form id="resetPasswordForm">
                 <input type="hidden" id="resetPasswordUserId">
-                <div class="form-group">
+                <div class="form-group password-toggle-container">
                     <label class="form-label" for="new_password">New Password</label>
-                    <input type="password" id="new_password" name="new_password" class="form-input" required>
+                    <div class="input-wrapper">
+                        <input type="password" id="new_password" name="new_password" class="form-input" required>
+                        <button type="button" class="password-toggle-button" onclick="togglePasswordVisibility('new_password')">
+                            👁️
+                        </button>
+                    </div>
                 </div>
-                <div class="form-group">
+                <div class="password-requirements">
+                    <div class="requirements-title">Le mot de passe doit contenir :</div>
+                    <ul class="requirements-list">
+                        <li>Au moins 8 caractères</li>
+                        <li>Au moins une lettre majuscule</li>
+                        <li>Au moins une lettre minuscule</li>
+                        <li>Au moins un chiffre</li>
+                        <li>Au moins un caractère spécial</li>
+                    </ul>
+                </div>
+                <div class="form-group password-toggle-container">
                     <label class="form-label" for="confirm_new_password">Confirm New Password</label>
-                    <input type="password" id="confirm_new_password" name="confirm_new_password" class="form-input" required>
+                    <div class="input-wrapper">
+                        <input type="password" id="confirm_new_password" name="confirm_new_password" class="form-input" required>
+                        <button type="button" class="password-toggle-button" onclick="togglePasswordVisibility('confirm_new_password')">
+                            👁️
+                        </button>
+                    </div>
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="btn-cancel" onclick="hideResetPasswordModal()">Cancel</button>
@@ -777,6 +881,15 @@
             setTimeout(() => {
                 notif.classList.remove('show');
             }, 3500);
+        }
+        
+        function togglePasswordVisibility(fieldId) {
+            const passwordField = document.getElementById(fieldId);
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+            } else {
+                passwordField.type = 'password';
+            }
         }
         
         async function deleteUser(userId) {

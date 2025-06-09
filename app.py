@@ -15,7 +15,24 @@ import hmac
 import hashlib
 import random
 import mimetypes
+import requests
+import re
 from utils import generate_rsa_keys, save_rsa_keys, generate_hmac, generate_random_iv, encrypt_with_aes, encrypt_with_rsa, decrypt_with_rsa, decrypt_with_aes, sign_message, verify_signature, verify_hmac,get_user_private_key, get_user_public_key
+
+# Fonction de validation de mot de passe
+def validate_password(password):
+    """Valide le mot de passe selon des critères de sécurité."""
+    if len(password) < 8:
+        raise ValueError('Le mot de passe doit contenir au moins 8 caractères.')
+    if not re.search(r"[A-Z]", password):
+        raise ValueError('Le mot de passe doit contenir au moins une lettre majuscule.')
+    if not re.search(r"[a-z]", password):
+        raise ValueError('Le mot de passe doit contenir au moins une lettre minuscule.')
+    if not re.search(r"\d", password):
+        raise ValueError('Le mot de passe doit contenir au moins un chiffre.')
+    if not re.search(r"[^a-zA-Z0-9]", password):
+        raise ValueError('Le mot de passe doit contenir au moins un caractère spécial.')
+    return True
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
@@ -33,6 +50,9 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+# Clé privée partagée pour le HMAC (à stocker de manière sécurisée)
+SHARED_HMAC_KEY = os.urandom(32)  # Générée une seule fois au démarrage du serveur
+
 # Models
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -46,6 +66,7 @@ class User(UserMixin, db.Model):
     groups = db.relationship('Group', secondary='user_groups', backref=db.backref('users', lazy='dynamic'))
 
     def set_password(self, password):
+        validate_password(password)
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
@@ -79,6 +100,7 @@ class File(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_starred = db.Column(db.Boolean, default=False)
     status = db.Column(db.String(20), nullable=False, default='complete')
+    hmac = db.Column(db.String(64), nullable=False)  # Pour stocker le HMAC du fichier
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -145,6 +167,22 @@ def login():
         email = request.form.get('email')
         password = request.form.get('password')
         remember = 'remember' in request.form
+        recaptcha_response = request.form.get('g-recaptcha-response')
+
+        # Verify reCAPTCHA
+        if not recaptcha_response:
+            flash('Please complete the reCAPTCHA.', 'error')
+            return render_template('login.html')
+
+        recaptcha_secret = '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
+        verify_url = 'https://www.google.com/recaptcha/api/siteverify'
+        payload = {'secret': recaptcha_secret, 'response': recaptcha_response, 'remoteip': request.remote_addr}
+        r = requests.post(verify_url, data=payload)
+        result = r.json()
+
+        if not result.get('success'):
+            flash('Invalid reCAPTCHA. Please try again.', 'error')
+            return render_template('login.html')
 
         # Check if user is in waiting period
         last_attempt_time = session.get('last_attempt_time')
@@ -440,7 +478,8 @@ def upload_file():
         if file.filename == '':
             continue
             
-        file_size = len(file.read())
+        file_content = file.read()
+        file_size = len(file_content)
         file.seek(0)  # Reset file pointer
         
         if used_storage + file_size > current_user.storage_limit:
@@ -450,23 +489,26 @@ def upload_file():
         unique_filename = f"{uuid.uuid4()}_{filename}"
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
         
-        is_local = request.form.get('is_local') == '1'
-        
         try:
+            # Calculer le HMAC avec la clé privée partagée
+            file_hmac = hmac.new(SHARED_HMAC_KEY, file_content, hashlib.sha256).hexdigest()
+            
+            # Sauvegarder le fichier
             file.save(file_path)
+            
             new_file = File(
                 name=filename,
                 filename=unique_filename,
                 size=file_size,
-                mime_type=get_mime_type(filename),
+                mime_type=file.content_type,
                 folder_id=folder_id,
                 owner_id=current_user.id,
                 status='complete',
-                is_starred=is_local
+                hmac=file_hmac
             )
             db.session.add(new_file)
-            db.session.commit()  # Commit each file individually to get ID
-            uploaded_files.append(new_file)  # Add the file object to the list
+            db.session.commit()
+            uploaded_files.append(new_file)
             used_storage += file_size
             
         except Exception as e:
@@ -674,7 +716,27 @@ def download_file(file_id):
 @login_required
 def view_file(file_id):
     file = File.query.get_or_404(file_id)
-    if not current_user.is_admin and file.owner_id != current_user.id:
+
+    # Check file permissions
+    has_access = False
+
+    # Owner always has access
+    if file.owner_id == current_user.id:
+        has_access = True
+    # Admins have access to everything
+    elif current_user.is_admin:
+        has_access = True
+    # Check access via groups if the file is in a folder
+    elif file.folder_id:
+        folder = Folder.query.get(file.folder_id)
+        if folder:
+            # Check if the user has access to the folder via groups
+            user_groups = set(g.id for g in current_user.groups)
+            folder_groups = set(g.id for g in folder.groups)
+            if user_groups.intersection(folder_groups):
+                has_access = True
+
+    if not has_access:
         flash('You do not have permission to view this file.', 'error')
         return redirect(url_for('browse'))
 
@@ -1275,15 +1337,21 @@ def reset_user_password(user_id):
         new_password = data.get('new_password')
         
         if not new_password:
-            return jsonify({'success': False, 'message': 'New password is required'})
+            return jsonify({'success': False, 'message': 'New password is required'}), 400
         
-        user.set_password(new_password)
-        db.session.commit()
-        
-        return jsonify({'success': True, 'message': 'Password reset successfully'})
+        try:
+            user.set_password(new_password)
+            db.session.commit()
+            return jsonify({'success': True, 'message': 'Password reset successfully'})
+        except ValueError as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'message': str(e)}), 400
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'message': 'An unexpected error occurred: ' + str(e)}), 500
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)})
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/admin/groups', methods=['GET', 'POST', 'DELETE'])
 @login_required
@@ -1547,6 +1615,57 @@ def search_groups():
             'user_count': group.users.count()
         } for group in groups]
     })
+
+@app.route('/api/files/<int:file_id>/verify', methods=['GET'])
+@login_required
+def verify_file_integrity(file_id):
+    file = File.query.get_or_404(file_id)
+    
+    # Vérifier les permissions d'accès au fichier
+    has_access = False
+    
+    # Le propriétaire a toujours accès
+    if file.owner_id == current_user.id:
+        has_access = True
+    # Les administrateurs ont accès à tout
+    elif current_user.is_admin:
+        has_access = True
+    # Vérifier l'accès via les groupes si le fichier est dans un dossier
+    elif file.folder_id:
+        folder = Folder.query.get(file.folder_id)
+        if folder:
+            # Vérifier si l'utilisateur a accès au dossier via les groupes
+            user_groups = set(g.id for g in current_user.groups)
+            folder_groups = set(g.id for g in folder.groups)
+            if user_groups.intersection(folder_groups):
+                has_access = True
+    
+    if not has_access:
+        return jsonify({'success': False, 'message': 'Access denied'})
+    
+    try:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+        if not os.path.exists(file_path):
+            return jsonify({'success': False, 'message': 'File not found'})
+        
+        # Lire le contenu du fichier
+        with open(file_path, 'rb') as f:
+            file_content = f.read()
+        
+        # Calculer le HMAC avec la clé privée partagée
+        current_hmac = hmac.new(SHARED_HMAC_KEY, file_content, hashlib.sha256).hexdigest()
+        
+        # Comparer avec le HMAC stocké
+        is_valid = current_hmac == file.hmac
+        
+        return jsonify({
+            'success': True,
+            'is_valid': is_valid,
+            'message': 'File integrity verified' if is_valid else 'File integrity check failed'
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
 
 if __name__ == '__main__':
     with app.app_context():

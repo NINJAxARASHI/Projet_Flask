@@ -388,7 +388,12 @@
                         <a href="{{ url_for('forgot_password') }}" class="forgot">Forgot Password?</a>
                     </div>
 
-                    <button type="submit">Log In</button>
+                    <!-- Google reCAPTCHA -->
+                    <div class="recaptcha-container">
+                        <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div>
+                    </div>
+
+                    <button type="submit" class="login-button">Log In</button>
                 </form>
 
                 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -422,5 +427,7 @@
             }
         });
     </script>
+    <!-- Google reCAPTCHA script -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </body>
 </html>
